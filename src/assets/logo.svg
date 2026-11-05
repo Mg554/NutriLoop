@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024"><defs><radialGradient id="bg" cx="35%" cy="30%" r="85%"><stop offset="0" stop-color="#FF9A5C"/><stop offset="1" stop-color="#F2533C"/></radialGradient></defs>
+  <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
+<g transform="translate(512 512) scale(1) translate(-512 -512)">
+  <!-- the loop: a daily habit cycle -->
+  <path d="M 578.1 200.9 A 318 318 0 1 1 242.3 343.5" fill="none" stroke="#FFFFFF" stroke-width="62" stroke-linecap="round"/>
+  <path d="M 189.7,310.6 L 272.6,302.7 L 294.9,376.3 Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="18" stroke-linejoin="round"/>
+  <path d="M 316.2 261.4 A 318 318 0 0 1 489.8 194.8" fill="none" stroke="#FFD86B" stroke-width="62" stroke-linecap="round"/>
+  <!-- apple -->
+  <path d="M512 430 C 455 385, 352 400, 350 505 C 348 615, 430 700, 512 678 C 594 700, 676 615, 674 505 C 672 400, 569 385, 512 430 Z" fill="#4CC38A"/>
+  <path d="M512 430 C 569 385, 672 400, 674 505 C 676 615, 594 700, 512 678 Z" fill="#3AAE77"/>
+  <ellipse cx="430" cy="490" rx="26" ry="44" fill="#FFFFFF" opacity=".35" transform="rotate(20 430 490)"/>
+  <path d="M512 432 C 512 400, 520 372, 538 352" stroke="#7A4A2A" stroke-width="18" fill="none" stroke-linecap="round"/>
+  <path d="M540 360 C 590 320, 650 340, 662 370 C 620 400, 566 398, 540 360 Z" fill="#2E9E66"/>
+  <!-- friendly face -->
+  <circle cx="468" cy="540" r="16" fill="#1F3D2E"/>
+  <circle cx="556" cy="540" r="16" fill="#1F3D2E"/>
+  <path d="M478 586 Q 512 616 546 586" stroke="#1F3D2E" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <circle cx="440" cy="582" r="15" fill="#FF8FA3" opacity=".7"/>
+  <circle cx="584" cy="582" r="15" fill="#FF8FA3" opacity=".7"/>
+</g></svg>

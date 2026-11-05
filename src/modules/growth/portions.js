@@ -1,0 +1,100 @@
+// ---------------------------------------------------------------------------
+// One "serving" per food, following the Dietary Guidelines 2025-2030 serving
+// examples (vegetables 1 cup / 2 cups leafy; fruit 1 cup or 1 medium piece;
+// grains 1 slice bread or ½ cup cooked; protein 1 egg, ½ cup legumes, 3 oz
+// meat, 1 oz nuts; dairy 1 cup milk, ¾ cup yogurt, 1 oz cheese).
+//
+// kcal = APPROXIMATE energy of that serving as typically eaten (USDA
+// FoodData Central-style averages; home dishes like maqluba vary a lot).
+// The child sees only the serving text ("one egg"); parents see the kcal.
+// ---------------------------------------------------------------------------
+export const PORTIONS = {
+  // vegetables
+  broc: [31, 'كاسة بروكلي', '1 cup broccoli'],
+  carrot: [50, 'جزرة كبيرة أو كاسة مقطّع', '1 large carrot or 1 cup'],
+  cucumber: [16, 'خيارة كبيرة', '1 large cucumber'],
+  tomato: [32, 'حبتين بندورة وسط', '2 medium tomatoes'],
+  spinach: [14, 'كاستين سبانخ ورق', '2 cups leaves'],
+  corn: [130, 'كاسة ذرة أو عرنوس كبير', '1 cup or 1 large ear'],
+  potato: [135, 'كاسة بطاطا مسلوقة', '1 cup boiled'],
+  lettuce: [10, 'كاستين خس', '2 cups leaves'],
+  pepper: [30, 'فليفلة كبيرة', '1 large pepper'],
+  eggplant: [35, 'كاسة باذنجان مطبوخ', '1 cup cooked'],
+  olives: [50, '١٠ حبات زيتون', '10 olives'],
+  zucchini: [30, 'كاسة كوسا مطبوخة', '1 cup cooked'],
+  mloukhieh: [90, 'كاسة ملوخية', '1 cup stew'],
+  warak: [180, '٦ أصابع ورق عنب', '6 stuffed leaves'],
+  salad: [70, 'كاسة سلطة مع زيت', '1 cup with oil'],
+  onion: [64, 'كاسة بصل', '1 cup'],
+  garlic: [5, 'سن ثوم', '1 clove'],
+  mushroom: [15, 'كاسة فطر', '1 cup'],
+  peas: [117, 'كاسة بازيلا', '1 cup'],
+  sweetpotato: [180, 'كاسة بطاطا حلوة', '1 cup cooked'],
+  avocado: [120, 'نص حبة أفوكادو', '½ avocado'],
+  chili: [20, 'حبة فلفل حار', '1 pepper'],
+  // fruits
+  apple: [95, 'تفاحة وسط', '1 medium apple'],
+  banana: [105, 'موزة وسط', '1 medium banana'],
+  straw: [50, 'كاسة فراولة', '1 cup'],
+  dates: [140, '٣ حبات تمر', '3 dates'],
+  orange: [62, 'برتقالة وسط', '1 medium orange'],
+  grape: [104, 'كاسة عنب', '1 cup'],
+  watermelon: [46, 'كاسة بطيخ مقطّع', '1 cup diced'],
+  mango: [99, 'كاسة مانجا', '1 cup'],
+  pear: [101, 'نجاصة وسط', '1 medium pear'],
+  figs: [74, 'حبتين تين', '2 figs'],
+  pomegranate: [144, 'كاسة حبّ رمان', '1 cup arils'],
+  apricot: [50, '٣ حبات مشمش', '3 apricots'],
+  cactus: [61, 'كاسة صبر (٢-٣ حبات)', '1 cup (2-3 fruits)'],
+  lemon: [17, 'ليمونة', '1 lemon'],
+  peach: [60, 'دراقة وسط', '1 medium peach'],
+  cherry: [87, 'كاسة كرز', '1 cup'],
+  melon: [54, 'كاسة شمام', '1 cup'],
+  pineapple: [82, 'كاسة أناناس', '1 cup'],
+  kiwi: [84, 'حبتين كيوي', '2 kiwis'],
+  berries: [84, 'كاسة توت', '1 cup'],
+  greenapple: [95, 'تفاحة وسط', '1 medium apple'],
+  coconut: [140, 'نص كاسة جوز هند', '½ cup'],
+  // grains / starches
+  rice: [103, 'نص كاسة رز', '½ cup cooked'],
+  bread: [80, 'شريحة خبز', '1 slice'],
+  taboon: [150, 'نص رغيف طابون', '½ taboon loaf'],
+  oats: [83, 'نص كاسة شوفان مطبوخ', '½ cup cooked'],
+  pasta: [110, 'نص كاسة معكرونة', '½ cup cooked'],
+  bulgur: [76, 'نص كاسة برغل', '½ cup cooked'],
+  freekeh: [90, 'نص كاسة فريكة', '½ cup cooked'],
+  maqluba: [250, 'كاسة مقلوبة', '1 cup'],
+  musakhan: [350, 'ربع رغيف مسخّن', '¼ musakhan loaf'],
+  maftoul: [200, 'كاسة مفتول مع المرق', '1 cup with stew'],
+  mujaddara: [150, 'نص كاسة مجدرة', '½ cup'],
+  kaak: [200, 'نص كعكة قدس', '½ ka’ak'],
+  manakish: [280, 'منقوشة زعتر صغيرة', '1 small manakish'],
+  saj: [180, 'رغيف صاج (شراك)', '1 saj sheet'],
+  brownbread: [70, 'شريحة خبز أسمر', '1 slice'],
+  croissant: [230, 'كرواسون', '1 croissant'],
+  pancake: [180, 'حبتين بان كيك صغار', '2 small pancakes'],
+  // protein
+  chicken: [140, 'قطعة جاج بحجم كف إيدك', 'palm-size piece (3 oz)'],
+  egg: [78, 'بيضة وحدة', '1 egg'],
+  fish: [120, 'قطعة سمك بحجم كف إيدك', 'palm-size piece (3 oz)'],
+  hummus: [100, '٤ ملاعق كبار حمص', '¼ cup hummus'],
+  lentils: [115, 'نص كاسة عدس', '½ cup cooked'],
+  beans: [130, 'نص كاسة فول', '½ cup'],
+  nuts: [165, 'حفنة صغيرة مكسرات', '1 oz (small handful)'],
+  meat: [210, 'قطعة لحمة بحجم كف إيدك', 'palm-size piece (3 oz)'],
+  falafel: [170, '٣ حبات فلافل', '3 falafel'],
+  kofta: [230, '٢ أصابع كفتة', '2 kofta'],
+  shawarma: [300, 'سندويشة شاورما صغيرة', '1 small wrap'],
+  tuna: [140, 'نص علبة تونة', '½ can'],
+  chickpeas: [135, 'نص كاسة حمص حب', '½ cup'],
+  // dairy
+  milk: [130, 'كاسة حليب', '1 cup milk'],
+  cheese: [110, 'شريحة جبنة (٣٠ غم)', '1 oz slice'],
+  labneh: [90, '٣ ملاعق كبار لبنة', '3 tbsp labneh'],
+  yogurt: [110, '¾ كاسة لبن', '¾ cup yogurt'],
+  nabulsi: [90, 'قطعة جبنة نابلسية (٣٠ غم)', '1 oz'],
+  jameed: [150, 'كاسة لبن جميد (مرق منسف)', '1 cup jameed sauce'],
+  ayran: [75, 'كاسة عيران', '1 cup ayran'],
+}
+
+export const portionOf = (id) => PORTIONS[id] || [0, 'حصة', '1 serving']

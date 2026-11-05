@@ -1,0 +1,75 @@
+@import 'tailwindcss';
+@import '@fontsource/cairo/400.css';
+@import '@fontsource/cairo/700.css';
+@import '@fontsource/cairo/900.css';
+
+:root {
+  --bg: #fff4e0;
+  --bg-soft: #fff9ef;
+  --surface: #ffffff;
+  --surface-2: #fff0d5;
+  --text: #3b2f2f;
+  --text-soft: #8b7e74;
+  --primary: #ff6b4a;
+  --primary-soft: #ffe2da;
+  --border: #f2ddc2;
+}
+
+* {
+  font-family: 'Cairo', system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+input, textarea { user-select: text; -webkit-user-select: text; }
+button { cursor: pointer; touch-action: manipulation; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+.pb-safe { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
+
+@keyframes bounceSoft { 0%, 100% { transform: translateY(0) rotate(0) } 50% { transform: translateY(-6px) rotate(3deg) } }
+@keyframes popIn { 0% { transform: scale(.6); opacity: 0 } 70% { transform: scale(1.08); opacity: 1 } 100% { transform: scale(1) } }
+@keyframes shake { 0%, 100% { transform: translateX(0) } 25% { transform: translateX(-4px) } 75% { transform: translateX(4px) } }
+@keyframes glow { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 107, 74, 0) } 50% { box-shadow: 0 0 0 6px rgba(255, 107, 74, .25) } }
+
+.anim-bounce { animation: bounceSoft 3s infinite ease-in-out; }
+.anim-pop { animation: popIn .35s cubic-bezier(.34, 1.56, .64, 1); }
+.anim-shake { animation: shake .3s; }
+.drop-over { outline: 3px dashed var(--primary); outline-offset: -3px; animation: glow 1s infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* exercise runner emoji animations */
+@keyframes exJump { 0%, 100% { transform: translateY(0) scale(1, 1) } 40% { transform: translateY(-28px) scale(.95, 1.05) } 80% { transform: translateY(0) scale(1.1, .9) } }
+@keyframes exSway { 0%, 100% { transform: rotate(-14deg) } 50% { transform: rotate(14deg) } }
+@keyframes exSpin { to { transform: rotate(360deg) } }
+@keyframes exStretch { 0%, 100% { transform: scaleY(1) } 50% { transform: scaleY(1.2) translateY(-8px) } }
+@keyframes exBow { 0%, 100% { transform: rotate(0) } 50% { transform: rotate(25deg) translateY(8px) } }
+@keyframes exBreathe { 0%, 100% { transform: scale(.85) } 50% { transform: scale(1.25) } }
+@keyframes exShrug { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-14px) } }
+@keyframes exMarch { 0%, 100% { transform: translateY(0) rotate(-6deg) } 50% { transform: translateY(-10px) rotate(6deg) } }
+@keyframes exShake { 0%, 100% { transform: translateX(0) rotate(0) } 25% { transform: translateX(-8px) rotate(-8deg) } 75% { transform: translateX(8px) rotate(8deg) } }
+@keyframes exSquat { 0%, 100% { transform: translateY(0) scaleY(1) } 50% { transform: translateY(16px) scaleY(.85) } }
+@keyframes exHold { 0%, 100% { transform: rotate(-2deg) } 50% { transform: rotate(2deg) } }
+@keyframes exStomp { 0%, 100% { transform: translateY(0) } 30% { transform: translateY(-12px) } 45% { transform: translateY(4px) scaleX(1.1) } }
+.ex-jump { animation: exJump .6s infinite ease-in-out; display: inline-block }
+.ex-sway { animation: exSway 1.6s infinite ease-in-out; display: inline-block }
+.ex-spin { animation: exSpin 1.4s infinite linear; display: inline-block }
+.ex-stretch { animation: exStretch 2.4s infinite ease-in-out; display: inline-block }
+.ex-bow { animation: exBow 2.4s infinite ease-in-out; display: inline-block }
+.ex-breathe { animation: exBreathe 8s infinite ease-in-out; display: inline-block }
+.ex-shrug { animation: exShrug 1.2s infinite ease-in-out; display: inline-block }
+.ex-march { animation: exMarch .5s infinite ease-in-out; display: inline-block }
+.ex-shake { animation: exShake .35s infinite; display: inline-block }
+.ex-squat { animation: exSquat 1.4s infinite ease-in-out; display: inline-block }
+.ex-hold { animation: exHold 2s infinite ease-in-out; display: inline-block }
+.ex-stomp { animation: exStomp .9s infinite; display: inline-block }

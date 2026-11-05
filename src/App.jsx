@@ -1,0 +1,144 @@
+// Root: profile picker -> child app, or PIN -> parent dashboard. Handles events.
+import { useEffect, useRef, useState } from 'react'
+import ChildApp from './ChildApp'
+import { ParentDashboard, PinGate } from './Parent'
+import { BADGES, STR } from './data'
+import { useStore } from './store'
+import { audio, confetti, sfx } from './sfx'
+import { LangCtx, Modal, resolve } from './ui'
+import logo from './assets/logo.svg'
+
+export default function App() {
+  const { state, actions, onEvent } = useStore()
+  const { settings, children } = state
+  const lang = settings.lang
+  const [screen, setScreen] = useState('pick') // pick | child | pin | parent
+  const [childId, setChildId] = useState(null)
+  const [toastMsg, setToastMsg] = useState('')
+  const [modals, setModals] = useState([])
+  const modal = modals[0]
+  const setModal = (m) => (m ? setModals((q) => [...q, m]) : setModals((q) => q.slice(1)))
+  const toastTimer = useRef()
+
+  const child = children.find((c) => c.id === childId)
+  const gender = child?.gender || 'm'
+  const tr = (key, vars) => resolve((gender === 'f' && STR[lang][key + 'F']) || STR[lang][key], gender, vars)
+
+  const toast = (m) => {
+    setToastMsg(m)
+    clearTimeout(toastTimer.current)
+    toastTimer.current = setTimeout(() => setToastMsg(''), 2600)
+  }
+
+  useEffect(() => {
+    audio.muted = !settings.sound
+    audio.speak = settings.speak
+    document.documentElement.lang = lang
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'
+  }, [settings.sound, settings.speak, lang])
+
+  // Roll the day over (quests/water reset) on open, every minute, and on refocus.
+  useEffect(() => {
+    if (!childId) return
+    actions.touchDay(childId)
+    const id = setInterval(() => actions.touchDay(childId), 60000)
+    const vis = () => document.visibilityState === 'visible' && actions.touchDay(childId)
+    document.addEventListener('visibilitychange', vis)
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', vis) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [childId])
+
+  // Side effects for game events (run after state commit, never inside setState).
+  onEvent((events) => {
+    // Several rewards can land on one action: show ONE popup for them, not five.
+    const badges = events.filter((e) => e.type === 'badge').map((e) => BADGES.find((b) => b.id === e.id))
+    const level = events.filter((e) => e.type === 'levelUp').pop()
+    const tree = events.some((e) => e.type === 'treeGrown')
+    for (const e of events) {
+      switch (e.type) {
+        case 'questDone': sfx.sparkle(); confetti(); break
+        case 'questPending': sfx.pop(); toast('⏳ ' + tr('pending')); break
+        case 'allQuests': setTimeout(() => { sfx.fanfare(); confetti() }, 400); break
+        case 'water': sfx.sparkle(); break
+        case 'waterGoal': confetti(); toast((e.move ? '⚡' : '💧') + '🎉 +30 XP'); break
+        case 'undo': sfx.whoosh(); break
+        case 'plateSaved': sfx.fanfare(); confetti(); toast(tr('saved') + (e.xp ? ` +${e.xp} XP` : '')); break
+        case 'gameOver': if (e.xp) { sfx.fanfare(); confetti() } break
+        case 'toast': if (e.key === 'streakUp') toast(`🔥 ${e.n} ${tr('streak')}`); break
+      }
+    }
+    if (badges.length || level || tree) {
+      setTimeout(() => {
+        sfx.levelUp(); confetti()
+        setModal({
+          emoji: badges.length ? badges.map((b) => b.emoji).join(' ') : tree ? '🌳' : '🚀',
+          title: badges.length ? tr('newBadge') : tree ? STR[lang].stages[4] : tr('levelUp'),
+          body: badges.map((b) => b.title[lang]).join(' • '),
+          sub: [badges.length && `+${badges.length * 50} XP`, level && `🚀 Lv ${level.level}`, tree && badges.length && '🌳'].filter(Boolean).join('  '),
+        })
+      }, 1100)
+    }
+  })
+
+  const toggleLang = () => actions.setSetting('lang', lang === 'ar' ? 'en' : 'ar')
+
+  let body
+  if (screen === 'child' && child) {
+    body = (
+      <ChildApp
+        child={child}
+        progress={state.progress[child.id] || {}}
+        settings={settings}
+        actions={actions}
+        toast={toast}
+        onLang={toggleLang}
+        onSwitch={() => { setScreen('pick'); setChildId(null) }}
+      />
+    )
+  } else if (screen === 'pin') {
+    body = <PinGate hasPin={!!state.pin} pinHash={state.pin} onSet={actions.setPin} onOk={() => setScreen('parent')} onCancel={() => setScreen('pick')} />
+  } else if (screen === 'parent') {
+    body = <ParentDashboard state={state} actions={actions} toast={toast} onClose={() => setScreen('pick')} />
+  } else {
+    body = (
+      <div className="h-full flex flex-col items-center justify-center gap-6 p-6 anim-pop max-w-xl mx-auto">
+        <img src={logo} alt="NutriLoop" className="w-28 h-28 anim-bounce drop-shadow-lg" />
+        <h1 className="font-black text-2xl text-center">NutriLoop<br /><span className="text-base text-[var(--text-soft)]">{lang === 'ar' ? 'رحلة الأكل الصحي' : 'Healthy food adventure'}</span></h1>
+        {children.length > 0 && <h2 className="font-bold">{STR[lang].whoPlays}</h2>}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full">
+          {children.map((c) => (
+            <button key={c.id} onClick={() => { sfx.pop(); setChildId(c.id); setScreen('child') }} className="bg-white rounded-3xl border-2 border-[var(--border)] p-4 flex flex-col items-center gap-1 shadow-sm active:scale-95 hover:border-[var(--primary)]">
+              <span className="text-5xl">{c.avatar}</span>
+              <span className="font-black">{c.name}</span>
+            </button>
+          ))}
+        </div>
+        {children.length === 0 && (
+          <p className="text-center text-sm text-[var(--text-soft)]">
+            {lang === 'ar' ? 'أول مرة؟ الأهل يعملوا رمز سري ويضيفوا الأولاد' : 'First time? Parents: set a PIN and add your kids'}
+          </p>
+        )}
+        <div className="flex gap-2">
+          <button onClick={() => setScreen('pin')} className="px-5 py-2.5 rounded-full bg-gray-900 text-white text-sm font-bold">👨‍👩‍👧 {STR[lang].parent}</button>
+          <button onClick={toggleLang} className="px-4 py-2.5 rounded-full bg-white border border-[var(--border)] text-sm font-bold">{lang === 'ar' ? 'English' : 'عربي'}</button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <LangCtx.Provider value={{ lang, gender }}>
+      <div className="h-full">{body}</div>
+      {toastMsg && <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[70] bg-black/85 text-white px-5 py-2.5 rounded-full text-sm font-bold shadow-lg anim-pop max-w-[90vw] text-center">{toastMsg}</div>}
+      {modal && (
+        <Modal onClose={() => setModal(null)}>
+          <span className="text-7xl anim-bounce">{modal.emoji}</span>
+          <h2 className="text-xl font-black text-[var(--primary)]">{modal.title}</h2>
+          <p className="font-bold">{modal.body}</p>
+          {modal.sub && <p dir="ltr" className="text-xs font-bold text-[var(--primary)] bg-[var(--primary-soft)] px-3 py-1 rounded-full">{modal.sub}</p>}
+          <button onClick={() => setModal(null)} className="w-full py-3 bg-[var(--primary)] text-white font-black rounded-2xl">{STR[lang].ok}</button>
+        </Modal>
+      )}
+    </LangCtx.Provider>
+  )
+}
