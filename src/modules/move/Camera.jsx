@@ -6,6 +6,7 @@ import { loadPose } from './poseLoader'
 import { confetti, say, sfx, stopSpeech } from '../../sfx'
 import { useT } from '../../ui'
 import Kid, { kidProps } from './Kid'
+import { useBack } from '../../backStack'
 
 export const CAM_EXERCISES = [
   { id: 'squat', ex: 'squats', mult: 1 },
@@ -30,6 +31,8 @@ export function CameraCoach({ cam, age, child, onClose, onFinish }) {
   phaseRef.current = phase
   const startedAt = useRef(0)
   const finished = useRef(false)
+  const closeRef = useRef(() => {})
+  useBack(() => closeRef.current(), 3)
 
   const finish = (complete) => {
     if (finished.current) return
@@ -153,11 +156,12 @@ export function CameraCoach({ cam, age, child, onClose, onFinish }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])
 
-  const close = () => {
+  const close = (closeRef.current = () => {
     try { if (phase !== 'done') finish(false) } catch { /* ignore */ }
     stopSpeech()
     onClose()
-  }
+  })
+
   const pct = Math.min(100, (reps / target) * 100)
 
   return (

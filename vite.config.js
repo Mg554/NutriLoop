@@ -4,17 +4,31 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { viteSingleFile } from 'vite-plugin-singlefile'
 
-// Two builds:
+// (see build modes below)
 //   npm run build        -> dist/      PWA (installable on mobile, served by nginx)
 //   npm run build:single -> single/    one offline HTML file for the PC (Zorin)
+// Three builds:
+//   npm run build         -> dist/    PWA (phone via browser, served by nginx)
+//   npm run build:single  -> single/  one offline HTML file for the PC (Zorin)
+//   npm run build:native  -> www/     Android app (Capacitor); no service worker,
+//                                     the WebView is not edge-to-edge so the
+//                                     status bar never overlaps the UI
 export default defineConfig(({ mode }) => {
   const single = mode === 'single'
+  const native = mode === 'native'
+  const nativeHtml = {
+    name: 'native-viewport',
+    transformIndexHtml: (html) => html.replace(', viewport-fit=cover', ''),
+  }
   return {
     base: './',
+    define: { __NATIVE__: JSON.stringify(native) },
     plugins: [
       react(),
       tailwindcss(),
-      single
+      native
+        ? nativeHtml
+        : single
         ? viteSingleFile()
         : VitePWA({
             registerType: 'autoUpdate',
@@ -44,6 +58,6 @@ export default defineConfig(({ mode }) => {
             },
           }),
     ],
-    build: { outDir: single ? 'single' : 'dist', assetsInlineLimit: single ? 100000000 : 4096 },
+    build: { outDir: single ? 'single' : native ? 'www' : 'dist', assetsInlineLimit: single ? 100000000 : 4096 },
   }
 })

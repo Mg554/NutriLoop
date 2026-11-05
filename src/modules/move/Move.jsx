@@ -6,6 +6,7 @@ import { Card, useT } from '../../ui'
 import { CAM_EXERCISES, CameraCoach, camTarget } from './Camera'
 import Kid, { kidProps } from './Kid'
 import { ANIMALS } from './data'
+import { useBack } from '../../backStack'
 
 const EX_XP_CAP = 6 // routines/exercises that give XP per day
 
@@ -173,6 +174,8 @@ function Runner({ routine, age, child, onClose, onFinish }) {
   const worked = useRef(0) // seconds actually exercised
   const lastSec = useRef(-1)
   const finished = useRef(false)
+  useBack(() => quitRef.current(), 3)
+  const quitRef = useRef(() => {})
 
   const ex = EXERCISES[steps[idx]]
   const nextEx = EXERCISES[steps[idx + 1]]
@@ -260,12 +263,13 @@ function Runner({ routine, age, child, onClose, onFinish }) {
     endAt.current = Date.now()
     advance()
   }
-  const quit = () => {
+  const quit = (quitRef.current = () => {
     // close no matter what happens while saving / stopping speech
     try { if (phase !== 'done') finish(false) } catch { /* ignore */ }
     stopSpeech()
     onClose()
-  }
+  })
+
 
   const shown = phase === 'rest' ? nextEx : ex
   const shownId = phase === 'rest' ? steps[idx + 1] : steps[idx]

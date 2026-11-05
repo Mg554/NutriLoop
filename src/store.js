@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { BADGES, FOODS, MANNERS, QUEST_POOL, sectionOf, waterGoalForAge } from './data'
 import { OUTDOOR_MIN, moveGoalForAge } from './modules/move/data'
 import { portionOf } from './modules/growth/portions'
+import { isNative, nativeLoad, nativeSave } from './native'
 
 const EX_XP_CAP = 6
 
@@ -21,6 +22,16 @@ const yesterdayStr = () => {
 }
 
 // Small non-crypto hash: the PIN only keeps kids out of the parent panel.
+// Recovery code: 8 chars, no look-alike letters (0/O, 1/I/L). Stored only as a hash.
+export function newRecoveryCode() {
+  const A = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
+  const r = new Uint32Array(8)
+  crypto.getRandomValues(r)
+  const c = Array.from(r, (n) => A[n % A.length]).join('')
+  return `${c.slice(0, 4)}-${c.slice(4)}`
+}
+export const normCode = (s) => (s || '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+
 export const hashPin = (pin) => {
   let h = 2166136261
   for (const ch of 'yq:' + pin) h = Math.imul(h ^ ch.charCodeAt(0), 16777619)
@@ -182,16 +193,38 @@ export function useStore() {
   const listeners = useRef(null)
 
   useEffect(() => {
+    const json = JSON.stringify(state)
     try {
-      localStorage.setItem(KEY, JSON.stringify(state))
+      localStorage.setItem(KEY, json)
     } catch {
       /* storage full / blocked */
     }
+    // Android: also keep a durable copy outside the WebView cache
+    if (isNative) nativeSave(KEY, json)
   }, [state])
+
+  // Android: on start, restore from the durable copy if it is newer
+  // (or if the WebView storage was wiped).
+  useEffect(() => {
+    if (!isNative) return
+    nativeLoad(KEY).then((raw) => {
+      if (!raw) return
+      try {
+        const saved = JSON.parse(raw)
+        if (saved?.v === 2 && (saved.savedAt || 0) > (ref.current.savedAt || 0)) {
+          ref.current = saved
+          setState(saved)
+        }
+      } catch {
+        /* ignore a broken copy */
+      }
+    })
+  }, [])
 
   // act(fn): fn(draft, ev) mutates a CLONE; events are dispatched after commit.
   const act = useCallback((fn) => {
     const draft = structuredClone(ref.current)
+    draft.savedAt = Date.now()
     const ev = []
     fn(draft, ev)
     ref.current = draft
@@ -382,6 +415,7 @@ export function useStore() {
       }),
     setSetting: (k, v) => act((s) => { s.settings[k] = v }),
     setPin: (pin) => act((s) => { s.pin = hashPin(pin) }),
+    setRecovery: (hash) => act((s) => { s.recovery = hash }),
     replaceAll: (data) => act((s) => { Object.keys(s).forEach((k) => delete s[k]); Object.assign(s, data) }),
   }
 

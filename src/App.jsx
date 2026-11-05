@@ -1,7 +1,9 @@
 // Root: profile picker -> child app, or PIN -> parent dashboard. Handles events.
 import { useEffect, useRef, useState } from 'react'
 import ChildApp from './ChildApp'
-import { ParentDashboard, PinGate } from './Parent'
+import { ParentDashboard, PinGate, RecoverGate } from './Parent'
+import { handleBack } from './backStack'
+import { initNative } from './native'
 import { BADGES, STR } from './data'
 import { useStore } from './store'
 import { audio, confetti, sfx } from './sfx'
@@ -36,6 +38,11 @@ export default function App() {
     document.documentElement.lang = lang
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'
   }, [settings.sound, settings.speak, lang])
+
+  // Android: hardware back button + status bar
+  useEffect(() => initNative(handleBack), [])
+  // test hook: lets automated tests press "back" in a browser
+  useEffect(() => { window.__nlBack = handleBack }, [])
 
   // Roll the day over (quests/water reset) on open, every minute, and on refocus.
   useEffect(() => {
@@ -96,7 +103,11 @@ export default function App() {
       />
     )
   } else if (screen === 'pin') {
-    body = <PinGate hasPin={!!state.pin} pinHash={state.pin} onSet={actions.setPin} onOk={() => setScreen('parent')} onCancel={() => setScreen('pick')} />
+    body = <PinGate hasPin={!!state.pin} pinHash={state.pin} onSet={actions.setPin} onOk={() => setScreen('parent')} onCancel={() => setScreen('pick')} onForgot={() => setScreen('recover')} />
+  } else if (screen === 'recover') {
+    body = <RecoverGate recoveryHash={state.recovery} onOk={() => setScreen('newpin')} onCancel={() => setScreen('pin')} />
+  } else if (screen === 'newpin') {
+    body = <PinGate hasPin={false} onSet={actions.setPin} onOk={() => setScreen('parent')} onCancel={() => setScreen('pick')} />
   } else if (screen === 'parent') {
     body = <ParentDashboard state={state} actions={actions} toast={toast} onClose={() => setScreen('pick')} />
   } else {

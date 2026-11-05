@@ -8,6 +8,8 @@ import { analysePlate, getFood, levelInfo, liveStreak, sectionOf } from './store
 import { say, sfx } from './sfx'
 import { Card, Modal, Plate, emptyPlate, foodMatches, useDrag, useT } from './ui'
 import { findFoods } from './voiceMatch'
+import { isNative, nativeListen, nativeStopListen } from './native'
+import { useBack } from './backStack'
 
 const stageOf = (plant) => Math.min(4, Math.floor(plant / 25))
 const STAGE_EMOJI = ['🫘', '🌱', '🌿', '🌸', '🌳']
@@ -16,6 +18,8 @@ const STAGE_EMOJI = ['🫘', '🌱', '🌿', '🌸', '🌳']
 export default function ChildApp({ child, progress, settings, actions, onSwitch, onLang, toast }) {
   const { t, lang, gender } = useT()
   const [tab, setTab] = useState('today')
+  useBack(onSwitch, 0)
+  useBack(() => setTab(tab === 'diary' ? 'plate' : 'today'), 1, tab !== 'today')
   const lvl = levelInfo(progress.xp)
   const ranks = lang === 'ar' && gender === 'f' ? RANKS_F : RANKS[lang]
   const rank = ranks[Math.min(lvl.level - 1, ranks.length - 1)]
@@ -263,7 +267,27 @@ function PlateBuilder({ child, progress, actions, toast, onDiary }) {
   }
 
   const recRef = useRef(null)
+  const addSpoken = (alts) => {
+    const ids = findFoods(alts, FOODS)
+    if (!ids.length) return toast(alts.length ? `${t('notFound')}: «${alts[0]}»` : t('voiceSilence'))
+    const found = ids.map((id) => FOODS.find((f) => f.id === id))
+    found.forEach((f) => add(f))
+    setTimeout(() => toast(`${t('added')} ${found.map((f) => f.emoji).join(' ')}`), 50)
+  }
+  const nativeVoice = async () => {
+    if (listening) { nativeStopListen(); setListening(false); return }
+    setListening(true)
+    toast(t('listening'))
+    try {
+      addSpoken(await nativeListen(lang))
+    } catch (e) {
+      toast(t({ unsupported: 'voiceNoNative', denied: 'voiceDenied', network: 'voiceOffline' }[e?.code] || 'voiceErr'))
+    } finally {
+      setListening(false)
+    }
+  }
   const voice = (retryLang) => {
+    if (isNative) return nativeVoice()
     // tap again while listening = stop
     if (listening && recRef.current) { try { recRef.current.stop() } catch { /* ignore */ } return }
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
@@ -289,12 +313,7 @@ function PlateBuilder({ child, progress, actions, toast, onDiary }) {
     }
     r.onresult = (e) => {
       handled = true
-      const alts = Array.from(e.results[0] || []).map((x) => x.transcript)
-      const ids = findFoods(alts, FOODS)
-      if (!ids.length) return toast(`${t('notFound')}: «${alts[0] || ''}»`)
-      const found = ids.map((id) => FOODS.find((f) => f.id === id))
-      found.forEach((f) => add(f))
-      setTimeout(() => toast(`${t('added')} ${found.map((f) => f.emoji).join(' ')}`), 50)
+      addSpoken(Array.from(e.results[0] || []).map((x) => x.transcript))
     }
     try { r.start() } catch { setListening(false); toast(t('voiceErr')) }
   }

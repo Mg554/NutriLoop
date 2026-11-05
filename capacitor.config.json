@@ -1,0 +1,20 @@
+{
+  "appId": "com.mg554.nutriloop",
+  "appName": "NutriLoop",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true
+  },
+  "plugins": {
+    "SystemBars": { "insetsHandling": "native" },
+    "SplashScreen": {
+      "launchShowDuration": 900,
+      "launchAutoHide": true,
+      "backgroundColor": "#F2533C",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false
+    },
+    "StatusBar": { "overlaysWebView": false, "style": "LIGHT", "backgroundColor": "#FFF4E0" }
+  }
+}

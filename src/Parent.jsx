@@ -1,14 +1,17 @@
 // Parent area: PIN gate, children profiles, approvals, weekly summary, settings, backup.
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AVATARS, QUEST_POOL, waterGoalForAge } from './data'
 import { moveGoalForAge } from './modules/move/data'
 import Kid, { PALETTES, kidProps } from './modules/move/Kid'
 import GrowthView from './modules/growth/Growth'
-import { hashPin, todayStr } from './store'
+import { hashPin, newRecoveryCode, normCode, todayStr } from './store'
+import { isNative, shareBackup } from './native'
+import { useBack } from './backStack'
 import { Card, useT } from './ui'
 
-export function PinGate({ hasPin, pinHash, onOk, onSet, onCancel }) {
+export function PinGate({ hasPin, pinHash, onOk, onSet, onCancel, onForgot }) {
   const { t } = useT()
+  useBack(onCancel, 2)
   const [pin, setPin] = useState('')
   const [first, setFirst] = useState(null)
   const [err, setErr] = useState('')
@@ -45,6 +48,68 @@ export function PinGate({ hasPin, pinHash, onOk, onSet, onCancel }) {
         <button onClick={onCancel} className="w-[72px] h-[72px] rounded-2xl text-sm font-bold text-gray-500">{t('back')}</button>
         <button onClick={() => press('0')} className="w-[72px] h-[72px] rounded-2xl bg-white border border-[var(--border)] text-2xl font-black shadow-sm active:scale-90">0</button>
         <button onClick={() => setPin(pin.slice(0, -1))} className="w-[72px] h-[72px] rounded-2xl text-2xl">⌫</button>
+      </div>
+      {hasPin && onForgot && <button onClick={onForgot} className="text-sm font-bold text-[var(--primary)] underline underline-offset-4">{t('pinForgot')}</button>}
+    </div>
+  )
+}
+
+// Forgot PIN: type the recovery code. Old installs without a code get a
+// grown-up maths check instead (3 multiplications), so nobody is locked out.
+export function RecoverGate({ recoveryHash, onOk, onCancel }) {
+  const { t } = useT()
+  useBack(onCancel, 2)
+  const [code, setCode] = useState('')
+  const [err, setErr] = useState('')
+  const [qs] = useState(() => Array.from({ length: 3 }, () => [12 + Math.floor(Math.random() * 37), 6 + Math.floor(Math.random() * 8)]))
+  const [ans, setAns] = useState(['', '', ''])
+  const check = () => {
+    if (recoveryHash) {
+      if (hashPin(normCode(code)) === recoveryHash) onOk()
+      else setErr(t('recoverWrong'))
+    } else if (qs.every(([a, b], i) => +ans[i] === a * b)) onOk()
+    else setErr(t('recoverWrong'))
+  }
+  return (
+    <div className="h-full flex flex-col items-center justify-center gap-4 p-6 anim-pop max-w-sm mx-auto">
+      <div className="text-5xl">🗝️</div>
+      <h2 className="font-black text-lg text-center">{recoveryHash ? t('recoverTitle') : t('recoverMath')}</h2>
+      {recoveryHash ? (
+        <input id="recover-code" value={code} onChange={(e) => setCode(e.target.value)} placeholder="XXXX-XXXX" autoCapitalize="characters" dir="ltr"
+          className="w-full text-center text-2xl font-black tracking-widest px-4 py-3 rounded-2xl border-2 border-[var(--border)] outline-none focus:border-[var(--primary)]" />
+      ) : (
+        <div className="space-y-2 w-full" dir="ltr">
+          {qs.map(([a, b], i) => (
+            <label key={i} className="flex items-center gap-3 justify-center font-black text-xl">
+              {a} × {b} =
+              <input id={`recover-q${i}`} inputMode="numeric" value={ans[i]} onChange={(e) => setAns(ans.map((x, j) => (j === i ? e.target.value : x)))}
+                className="w-24 text-center px-2 py-2 rounded-xl border-2 border-[var(--border)] outline-none focus:border-[var(--primary)]" />
+            </label>
+          ))}
+        </div>
+      )}
+      {err && <p className="text-red-500 font-bold text-sm">{err}</p>}
+      <div className="flex gap-2 w-full">
+        <button onClick={check} className="flex-1 py-3 rounded-2xl bg-[var(--primary)] text-white font-black">{t('recoverGo')}</button>
+        <button onClick={onCancel} className="px-5 py-3 rounded-2xl border border-[var(--border)] font-bold">{t('back')}</button>
+      </div>
+    </div>
+  )
+}
+
+function RecoveryCodeCard({ code, onDone }) {
+  const { t } = useT()
+  const [copied, setCopied] = useState(false)
+  const copy = () => navigator.clipboard?.writeText(code).then(() => setCopied(true)).catch(() => {})
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl p-6 max-w-sm w-full text-center space-y-4 anim-pop">
+        <div className="text-5xl">🗝️</div>
+        <h2 className="font-black text-lg">{t('recoverShowTitle')}</h2>
+        <p className="text-sm text-[var(--text-soft)]">{t('recoverShowSub')}</p>
+        <div className="text-3xl font-black tracking-widest bg-[var(--surface-2)] rounded-2xl py-4 select-all" dir="ltr">{code}</div>
+        <button onClick={copy} className="text-sm font-bold text-[var(--primary)]">{copied ? '✅' : '📋'} {t('copy')}</button>
+        <button onClick={onDone} className="w-full py-3 rounded-2xl bg-gray-900 text-white font-black">{t('recoverSaved')}</button>
       </div>
     </div>
   )
@@ -183,6 +248,21 @@ export function ParentDashboard({ state, actions, onClose, toast }) {
   const [editing, setEditing] = useState(null) // child object | 'new' | null
   const [changingPin, setChangingPin] = useState(false)
   const [growthFor, setGrowthFor] = useState(null)
+  const [showCode, setShowCode] = useState(null)
+  const made = useRef(false)
+  // Every parent area gets a recovery code once (also older installs).
+  useEffect(() => {
+    if (state.recovery || made.current) return
+    made.current = true
+    const code = newRecoveryCode()
+    actions.setRecovery(hashPin(normCode(code)))
+    setShowCode(code)
+  }, [state.recovery, actions])
+  useBack(onClose, 0)
+  useBack(() => setGrowthFor(null), 2, !!growthFor)
+  useBack(() => setEditing(null), 2, !!editing)
+  useBack(() => setChangingPin(false), 2, changingPin)
+  const codeCard = showCode && <RecoveryCodeCard code={showCode} onDone={() => setShowCode(null)} />
   const { children, progress, settings } = state
   const today = todayStr()
 
@@ -191,6 +271,10 @@ export function ParentDashboard({ state, actions, onClose, toast }) {
   )
 
   const exportData = () => {
+    if (isNative) {
+      shareBackup(`nutriloop-backup-${today}.json`, JSON.stringify(state, null, 2)).catch(() => toast(t('importBad')))
+      return
+    }
     const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
@@ -235,6 +319,7 @@ export function ParentDashboard({ state, actions, onClose, toast }) {
 
   return (
     <div className="h-full overflow-y-auto no-scrollbar max-w-xl mx-auto p-4 space-y-4 pb-10">
+      {codeCard}
       <div className="flex items-center justify-between">
         <h1 className="font-black text-xl">👨‍👩‍👧 {t('parentTitle')}</h1>
         <button onClick={onClose} className="px-4 py-2 rounded-xl bg-gray-900 text-white text-sm font-bold">{t('lock')} 🔒</button>

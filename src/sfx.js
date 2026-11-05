@@ -1,5 +1,6 @@
 // Web Audio synth (no sound files -> works offline) + text-to-speech helper.
 import confettiLib from 'canvas-confetti'
+import { isNative, nativeSay, nativeStopSay } from './native'
 
 let ctx = null
 export const audio = { muted: false, speak: true }
@@ -53,12 +54,15 @@ export function confetti() {
 
 // Safe even where the browser has no speechSynthesis (some app webviews).
 export function stopSpeech() {
+  if (isNative) return nativeStopSay()
   try { window.speechSynthesis?.cancel() } catch { /* ignore */ }
 }
 
 // Read a word aloud for kids who can't read yet.
 export function say(text, lang) {
-  if (!audio.speak || !('speechSynthesis' in window)) return
+  if (!audio.speak) return
+  if (isNative) return nativeSay(text, lang)
+  if (!('speechSynthesis' in window)) return
   try {
     const u = new SpeechSynthesisUtterance(text)
     u.lang = lang === 'ar' ? 'ar-SA' : 'en-US'

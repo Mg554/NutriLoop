@@ -9,9 +9,23 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "build:single": "vite build --mode single",
-    "prebuild": "node scripts-posepack.mjs"
+    "prebuild": "node scripts-posepack.mjs",
+    "build:native": "vite build --mode native && node -e \"require('fs').rmSync('www/pose/pose-pack.js',{force:true})\"",
+    "android": "npm run build:native && npx cap sync android",
+    "icons": "node brand/make-icons.mjs && npx capacitor-assets generate --android --iconBackgroundColor '#F2533C' --splashBackgroundColor '#F2533C'",
+    "test": "node tests/count.test.mjs && node tests/growth.test.mjs && node tests/voice.test.mjs"
   },
   "dependencies": {
+    "@capacitor-community/speech-recognition": "^7.0.1",
+    "@capacitor-community/text-to-speech": "^8.0.2",
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/preferences": "^8.0.1",
+    "@capacitor/share": "^8.0.3",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.4",
     "@fontsource/cairo": "^5.3.0",
     "@mediapipe/pose": "^0.5.1675469404",
     "canvas-confetti": "^1.9.4",
@@ -19,6 +33,8 @@
     "react-dom": "^19.3.1"
   },
   "devDependencies": {
+    "@capacitor/assets": "^4.0.0",
+    "@capacitor/cli": "^8.6.0",
     "@tailwindcss/vite": "^4.3.4",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",

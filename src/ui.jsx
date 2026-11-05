@@ -1,6 +1,7 @@
 // Shared UI pieces: translation helper, unified mouse/touch drag, plate, modal.
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { STR } from './data'
+import { useBack } from './backStack'
 import { getFood } from './store'
 
 // ---- i18n ------------------------------------------------------------------
@@ -216,6 +217,7 @@ export const emptyPlate = () => ({ veg: [], grain: [], protein: [], dairy: [] })
 
 // ---- Modal & misc -------------------------------------------------------------
 export function Modal({ children, onClose }) {
+  useBack(onClose, 4)
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 backdrop-blur-sm p-4" onClick={onClose}>
       <div className="bg-white rounded-3xl p-6 w-full max-w-sm flex flex-col items-center text-center gap-4 anim-pop shadow-2xl" onClick={(e) => e.stopPropagation()}>
