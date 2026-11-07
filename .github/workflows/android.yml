@@ -79,7 +79,7 @@ jobs:
           APK=$(ls android/app/build/outputs/apk/release/*.apk | head -1)
           cp "$APK" "NutriLoop-${NL_VERSION_NAME}.apk"
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: NutriLoop-${{ env.NL_VERSION_NAME }}
           path: NutriLoop-*.apk

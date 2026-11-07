@@ -7,7 +7,8 @@ SRC="$(cd "$(dirname "$0")" && pwd)/nutriloop.html"
 DEST="$HOME/.local/share/nutriloop"
 mkdir -p "$DEST" "$HOME/.local/share/applications"
 cp "$SRC" "$DEST/index.html"
-# offline pose model for the camera smart coach
+# offline pose model for the camera smart coach + recorded Arabic voice
+mkdir -p "$DEST/voice" && cp "$(dirname "$0")"/voice/*.mp3 "$DEST/voice/" 2>/dev/null || true
 mkdir -p "$DEST/pose" && cp "$(dirname "$0")/pose/pose.js" "$(dirname "$0")/pose/pose-pack.js" "$DEST/pose/"
 cp "$(dirname "$0")/icon-512.png" "$DEST/icon.png" 2>/dev/null || true
 
