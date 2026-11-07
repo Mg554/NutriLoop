@@ -52,7 +52,7 @@ export default defineConfig(({ mode }) => {
               ],
             },
             workbox: {
-              globPatterns: ['**/*.{js,css,html,png,woff2,wasm,data,tflite,binarypb}'],
+              globPatterns: ['**/*.{js,css,html,png,svg,woff2,wasm,data,tflite,binarypb,mp3}'],
               globIgnores: ['pose/pose-pack.js'],
               maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
             },
