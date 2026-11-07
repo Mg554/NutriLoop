@@ -15,9 +15,10 @@ const stageOf = (plant) => Math.min(4, Math.floor(plant / 25))
 const STAGE_EMOJI = ['🫘', '🌱', '🌿', '🌸', '🌳']
 
 // ---------------------------------------------------------------------------
-export default function ChildApp({ child, progress, settings, actions, onSwitch, onLang, toast }) {
+export default function ChildApp({ child, progress, settings, actions, onSwitch, onLang, toast, deepTab }) {
   const { t, lang, gender } = useT()
-  const [tab, setTab] = useState('today')
+  const [tab, setTab] = useState(deepTab?.tab || 'today')
+  useEffect(() => { if (deepTab?.tab) setTab(deepTab.tab) }, [deepTab])
   useBack(onSwitch, 0)
   useBack(() => setTab(tab === 'diary' ? 'plate' : 'today'), 1, tab !== 'today')
   const lvl = levelInfo(progress.xp)

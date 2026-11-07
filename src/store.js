@@ -8,6 +8,7 @@ import { BADGES, FOODS, MANNERS, QUEST_POOL, sectionOf, waterGoalForAge } from '
 import { OUTDOOR_MIN, moveGoalForAge } from './modules/move/data'
 import { portionOf } from './modules/growth/portions'
 import { isNative, nativeLoad, nativeSave } from './native'
+import { defaultReminders } from './reminderDefaults'
 
 const EX_XP_CAP = 6
 
@@ -64,7 +65,7 @@ const newProgress = () => ({
 const initial = () => ({
   v: 2,
   pin: null,
-  settings: { lang: 'ar', sound: true, speak: true, approval: false, camera: false },
+  settings: { lang: 'ar', sound: true, speak: true, approval: false, camera: false, reminders: defaultReminders() },
   children: [],
   progress: {},
 })

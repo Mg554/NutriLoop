@@ -4,6 +4,7 @@ import ChildApp from './ChildApp'
 import { ParentDashboard, PinGate, RecoverGate } from './Parent'
 import { handleBack } from './backStack'
 import { initNative } from './native'
+import { onReminderTap, scheduleReminders } from './reminders'
 import { BADGES, STR } from './data'
 import { useStore } from './store'
 import { audio, confetti, sfx } from './sfx'
@@ -16,6 +17,7 @@ export default function App() {
   const lang = settings.lang
   const [screen, setScreen] = useState('pick') // pick | child | pin | parent
   const [childId, setChildId] = useState(null)
+  const [deepTab, setDeepTab] = useState(null) // { tab, n } from a tapped reminder
   const [toastMsg, setToastMsg] = useState('')
   const [modals, setModals] = useState([])
   const modal = modals[0]
@@ -43,6 +45,28 @@ export default function App() {
   useEffect(() => initNative(handleBack), [])
   // test hook: lets automated tests press "back" in a browser
   useEffect(() => { window.__nlBack = handleBack }, [])
+
+  // Reminders: re-plan the next 3 days whenever progress or settings change
+  // (debounced), so today's reminder disappears once the task is done.
+  useEffect(() => {
+    const id = setTimeout(() => scheduleReminders(state).catch(() => {}), 1500)
+    return () => clearTimeout(id)
+  }, [state])
+
+  // Tapping a reminder opens that child (or the picker) on the right tab
+  useEffect(
+    () =>
+      onReminderTap(({ tab, child }) => {
+        const c = child && state.children.find((x) => x.id === child)
+        if (c) {
+          setChildId(c.id)
+          setScreen('child')
+          setDeepTab({ tab, n: Date.now() })
+        } else setScreen('pick')
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [state.children.length],
+  )
 
   // Roll the day over (quests/water reset) on open, every minute, and on refocus.
   useEffect(() => {
@@ -93,6 +117,7 @@ export default function App() {
   if (screen === 'child' && child) {
     body = (
       <ChildApp
+        deepTab={deepTab}
         child={child}
         progress={state.progress[child.id] || {}}
         settings={settings}

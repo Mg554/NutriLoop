@@ -1,0 +1,84 @@
+# Generates the recorded Arabic voice clips with Piper (open-source TTS,
+# voice ar_JO-kareem-medium) and commits them to public/voice/.
+# Runs when the spoken phrases change, or by hand (Actions -> Voice clips).
+name: Voice clips
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - src/data.js
+      - src/modules/move/data.js
+      - src/speechText.js
+      - scripts/speech-lines.src.js
+      - scripts/synth.py
+      - .github/workflows/voice.yml
+
+permissions:
+  contents: write
+  actions: write   # to start the APK build after new clips land
+
+concurrency:
+  group: voice
+  cancel-in-progress: false
+
+jobs:
+  voice:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Collect phrases
+        run: |
+          node scripts/speech-lines.mjs
+          node scripts/voice-manifest.mjs ids
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install Piper
+        run: |
+          pip install --quiet piper-tts
+          sudo apt-get install -y -qq ffmpeg >/dev/null
+          pip show piper-tts | head -2
+
+      - name: Download voice model
+        run: |
+          base=https://huggingface.co/rhasspy/piper-voices/resolve/main/ar/ar_JO/kareem/medium
+          curl -sSLf -o ar.onnx      "$base/ar_JO-kareem-medium.onnx"
+          curl -sSLf -o ar.onnx.json "$base/ar_JO-kareem-medium.onnx.json"
+          ls -la ar.onnx*
+
+      - name: Synthesise
+        run: python scripts/synth.py voice-lines.json public/voice ar.onnx
+
+      - name: Manifest
+        run: node scripts/voice-manifest.mjs
+
+      - name: Commit clips
+        run: |
+          git config user.name  "nutriloop-bot"
+          git config user.email "nutriloop-bot@users.noreply.github.com"
+          git add public/voice src/voiceClips.js
+          if git diff --cached --quiet; then echo "no changes"; exit 0; fi
+          git commit -m "voice: regenerate Arabic clips (Piper ar_JO-kareem)"
+          git push
+
+      # pushes made with GITHUB_TOKEN don't trigger other workflows,
+      # so start the APK build explicitly when clips changed
+      - name: Rebuild APK with the new clips
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git log -1 --pretty=%s | grep -q "^voice:"; then gh workflow run android.yml --ref main; fi

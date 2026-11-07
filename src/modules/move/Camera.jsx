@@ -147,7 +147,7 @@ export function CameraCoach({ cam, age, child, onClose, onFinish }) {
       setCountLeft(n)
       if (n > 0) { sfx.pop(); say(String(n), lang) } else {
         clearInterval(id)
-        sfx.sparkle(); say(`${t('go')} ${ex.name[lang]}`, lang)
+        sfx.sparkle(); say([t('go'), ex.name[lang]], lang)
         startedAt.current = Date.now()
         setPhase('go')
       }

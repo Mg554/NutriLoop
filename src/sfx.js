@@ -1,6 +1,8 @@
 // Web Audio synth (no sound files -> works offline) + text-to-speech helper.
 import confettiLib from 'canvas-confetti'
 import { isNative, nativeSay, nativeStopSay } from './native'
+import { CLIPS } from './voiceClips'
+import { clipId, resolve } from './speechText'
 
 let ctx = null
 export const audio = { muted: false, speak: true }
@@ -52,15 +54,30 @@ export function confetti() {
   }
 }
 
-// Safe even where the browser has no speechSynthesis (some app webviews).
-export function stopSpeech() {
-  if (isNative) return nativeStopSay()
-  try { window.speechSynthesis?.cancel() } catch { /* ignore */ }
+// ---------------------------------------------------------------------------
+// Speech: recorded clips first (same natural Arabic voice on every device,
+// offline), the device's TTS only for phrases without a clip.
+// say('text') or say(['part one', 'part two']) -> spoken in sequence.
+// ---------------------------------------------------------------------------
+let gen = 0
+let current = null
+
+function playClips(ids) {
+  const my = ++gen
+  const next = () => {
+    if (my !== gen) return
+    const id = ids.shift()
+    if (!id) return
+    const a = new Audio(`voice/${id}.mp3`)
+    current = a
+    a.onended = next
+    a.onerror = next
+    a.play().catch(next)
+  }
+  next()
 }
 
-// Read a word aloud for kids who can't read yet.
-export function say(text, lang) {
-  if (!audio.speak) return
+function ttsSpeak(text, lang) {
   if (isNative) return nativeSay(text, lang)
   if (!('speechSynthesis' in window)) return
   try {
@@ -74,4 +91,22 @@ export function say(text, lang) {
   } catch {
     /* ignore */
   }
+}
+
+// Safe even where the browser has no speechSynthesis (some app webviews).
+export function stopSpeech() {
+  gen++
+  try { current?.pause() } catch { /* ignore */ }
+  current = null
+  if (isNative) return nativeStopSay()
+  try { window.speechSynthesis?.cancel() } catch { /* ignore */ }
+}
+
+export function say(text, lang) {
+  if (!audio.speak) return
+  const parts = (Array.isArray(text) ? text : [text]).map(resolve).filter(Boolean)
+  if (!parts.length) return
+  stopSpeech()
+  if (lang === 'ar' && parts.every((p) => CLIPS.has(clipId(p)))) return playClips(parts.map(clipId))
+  ttsSpeak(parts.join('. '), lang)
 }

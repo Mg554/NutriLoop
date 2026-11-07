@@ -9,7 +9,7 @@
 // The body is auto-grounded: the lowest foot (and hands when `hands:1`)
 // always touches the floor, and the figure is centred horizontally.
 // ---------------------------------------------------------------------------
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 const LEN = { torso: 48, neck: 5, head: 19, upper: 26, fore: 24, thigh: 33, shin: 33 }
 const GROUND = 226
@@ -25,22 +25,22 @@ export const MOVES = {
   breath: { p: 8000, f: [arm(-12, 12), { ash: -105, bsh: 105, lift: 2 }] },
   neck: { p: 3000, f: [{ tilt: -26 }, { tilt: 26 }] },
   shoulders: { p: 1200, f: [{}, { shrug: 9 }] },
-  march: { p: 1000, side: true, f: [{ ahip: 62, akn: -85, bhip: -5, ash: 28, ael: 40, bsh: -28, bel: 40 }, { ash: 5, bsh: -5, ael: 30, bel: 30 }, { bhip: 62, bkn: -85, ahip: -5, ash: -28, ael: 40, bsh: 28, bel: 40 }, { ash: -5, bsh: 5, ael: 30, bel: 30 }] },
-  shake: { p: 320, f: [{ ash: -32, bsh: 30, ael: 35, bel: -30, ahip: -12 }, { ash: -8, bsh: 10, ael: -25, bel: 20, bhip: 12 }] },
+  march: { anchor: 'pelvis', p: 1000, side: true, f: [{ ahip: 62, akn: -85, bhip: -5, ash: 28, ael: 40, bsh: -28, bel: 40 }, { ash: 5, bsh: -5, ael: 30, bel: 30 }, { bhip: 62, bkn: -85, ahip: -5, ash: -28, ael: 40, bsh: 28, bel: 40 }, { ash: -5, bsh: 5, ael: 30, bel: 30 }] },
+  shake: { anchor: 'pelvis', p: 320, f: [{ ash: -32, bsh: 30, ael: 35, bel: -30, ahip: -12 }, { ash: -8, bsh: 10, ael: -25, bel: 20, bhip: 12 }] },
   hops: { p: 520, f: [{ ahip: 10, akn: -22, bhip: -10, bkn: 22 }, { lift: 18, ash: -22, bsh: 22 }] },
   jacks: { p: 1000, f: [{ ash: -8, bsh: 8, ahip: -3, bhip: 3 }, { lift: 14, ash: -90, bsh: 90, ahip: -14, bhip: 14 }, { ash: -162, bsh: 162, ahip: -26, bhip: 26 }, { lift: 14, ash: -90, bsh: 90, ahip: -14, bhip: 14 }] },
   squats: { p: 1900, side: true, f: [arm(-4, 4), { lean: 22, ahip: 78, akn: -112, bhip: 74, bkn: -108, ash: 92, bsh: 98, ael: -4, dx: -6 }] },
-  knees: { p: 620, side: true, f: [{ ahip: 82, akn: -95, bhip: -4, ash: 35, ael: 70, bsh: -35, bel: 70, lift: 4 }, { bhip: 82, bkn: -95, ahip: -4, ash: -35, ael: 70, bsh: 35, bel: 70, lift: 4 }] },
+  knees: { anchor: 'pelvis', p: 620, side: true, f: [{ ahip: 82, akn: -95, bhip: -4, ash: 35, ael: 70, bsh: -35, bel: 70, lift: 4 }, { bhip: 82, bkn: -95, ahip: -4, ash: -35, ael: 70, bsh: 35, bel: 70, lift: 4 }] },
   plank: { p: 2200, side: true, f: [{ lean: 70, ahip: -58, bhip: -56, ash: -5, bsh: 5, hands: 1 }, { lean: 68, ahip: -60, bhip: -58, ash: -4, bsh: 6, hands: 1 }] },
   skip: { p: 460, f: [{ ash: -38, ael: 55, bsh: 38, bel: -55 }, { lift: 16, ash: -30, ael: 40, bsh: 30, bel: -40 }] },
   // animals (the kid imitates them; the animal emoji shows as a badge)
   frog: { p: 1500, f: [{ ahip: -72, akn: 122, bhip: 72, bkn: -122, ash: -4, bsh: 4, hands: 1 }, { ahip: -72, akn: 122, bhip: 72, bkn: -122, ash: -6, bsh: 6, hands: 1 }, { lift: 40, ash: -160, bsh: 160, ahip: -18, bhip: 18 }] },
   bear: { p: 1000, side: true, f: [{ lean: 112, ash: -8, bsh: 14, ahip: -16, bhip: 6, hands: 1 }, { lean: 112, ash: 14, bsh: -8, ahip: 6, bhip: -16, hands: 1 }] },
   crab: { p: 900, side: true, f: [{ lean: -52, ash: -12, bsh: -24, ahip: 75, akn: -95, bhip: 70, bkn: -92, hands: 1 }, { lean: -50, ash: -24, bsh: -12, ahip: 70, akn: -92, bhip: 75, bkn: -95, hands: 1, dx: 8 }] },
-  penguin: { p: 700, f: [{ lean: -10, ash: -20, bsh: 20, ahip: -3, bhip: 4, tilt: -6 }, { lean: 10, ash: -20, bsh: 20, ahip: -4, bhip: 3, tilt: 6 }] },
+  penguin: { anchor: 'pelvis', p: 700, f: [{ lean: -10, ash: -20, bsh: 20, ahip: -3, bhip: 4, tilt: -6 }, { lean: 10, ash: -20, bsh: 20, ahip: -4, bhip: 3, tilt: 6 }] },
   kangaroo: { p: 900, side: true, f: [{ lean: 22, ahip: 52, akn: -72, bhip: 48, bkn: -70, ash: 60, ael: 75, bsh: 62, bel: 75 }, { lift: 38, lean: 10, ahip: 30, akn: -60, bhip: 28, bkn: -58, ash: 60, ael: 85, bsh: 62, bel: 85 }] },
-  flamingo: { p: 2000, f: [{ ash: -95, bsh: 95, ahip: -2, bhip: 40, bkn: -120 }, { lean: 4, ash: -85, bsh: 105, ahip: -2, bhip: 42, bkn: -122 }] },
-  elephant: { p: 1400, side: true, f: [{ lean: 12, bsh: 20, bel: 30, ash: -5, ahip: 32, akn: -32 }, { lean: 12, bsh: 115, bel: 45, ash: 5, bhip: 32, bkn: -32 }] },
+  flamingo: { anchor: 'pelvis', p: 2000, f: [{ ash: -95, bsh: 95, ahip: -2, bhip: 40, bkn: -120 }, { lean: 4, ash: -85, bsh: 105, ahip: -2, bhip: 42, bkn: -122 }] },
+  elephant: { anchor: 'pelvis', p: 1400, side: true, f: [{ lean: 12, bsh: 20, bel: 30, ash: -5, ahip: 32, akn: -32 }, { lean: 12, bsh: 115, bel: 45, ash: 5, bhip: 32, bkn: -32 }] },
   rabbit: { p: 460, f: [{ ash: -165, ael: -38, bsh: 165, bel: 38, akn: -10, bkn: 10 }, { lift: 13, ash: -165, ael: -38, bsh: 165, bel: 38 }] },
 }
 
@@ -72,36 +72,46 @@ function lerpPose(frames, t) {
   return out
 }
 
-// Solve joint positions for one pose.
-function skeleton(q, side) {
-  const w = side ? 0.4 : 1
+// Solve joint positions for one pose, pelvis at (0,0) (before placing it).
+function skeletonRaw(q, side) {
+  const w = side ? 0.45 : 1
   const up = { x: Math.sin(rad(q.lean)), y: -Math.cos(rad(q.lean)) }
   const across = { x: Math.cos(rad(q.lean)), y: Math.sin(rad(q.lean)) }
   const P = { x: 0, y: 0 }
   const S = add(P, up, LEN.torso)
-  const sh = add(S, up, q.shrug - 4)
+  const sh = add(S, up, q.shrug - 5)
   const headDir = { x: Math.sin(rad(q.lean + q.tilt)), y: -Math.cos(rad(q.lean + q.tilt)) }
   const H = add(S, headDir, LEN.neck + LEN.head)
   const limb = (o, a1, a2, l1, l2) => { const j = add(o, dir(a1), l1); return [o, j, add(j, dir(a1 + a2), l2)] }
-  const sa = add(sh, across, -12 * w), sb = add(sh, across, 12 * w)
-  const ha = add(P, across, -6 * w), hb = add(P, across, 6 * w)
-  const sk = {
-    P, S, H, up,
+  // shoulders sit at the outer edge of the torso, hips inside the pelvis
+  const sa = add(sh, across, -14 * w), sb = add(sh, across, 14 * w)
+  const ha = add(P, across, -7 * w), hb = add(P, across, 7 * w)
+  return {
+    P, S, H, up, across, w, tiltDeg: q.lean + q.tilt, lift: q.lift, hands: q.hands,
     armA: limb(sa, q.ash, q.ael, LEN.upper, LEN.fore),
     armB: limb(sb, q.bsh, q.bel, LEN.upper, LEN.fore),
     legA: limb(ha, q.ahip, q.akn, LEN.thigh, LEN.shin),
     legB: limb(hb, q.bhip, q.bkn, LEN.thigh, LEN.shin),
   }
-  // grounding + centring
-  const contact = [sk.legA[2], sk.legB[2], ...(q.hands > 0.5 ? [sk.armA[2], sk.armB[2]] : [])]
+}
+
+// Horizontal anchor: feet stay planted (squats, jumps...), or the pelvis for
+// moves that lift one foot at a time (marching), so the body never slides.
+const anchorOf = (r, mode) => (mode === 'pelvis' ? r.P.x : (r.legA[2].x + r.legB[2].x) / 2)
+const bboxCenter = (r) => {
+  const xs = [r.S, r.H, ...r.armA, ...r.armB, ...r.legA, ...r.legB].map((p) => p.x)
+  return (Math.min(...xs) + Math.max(...xs)) / 2
+}
+
+// Ground the lowest contact point and apply the fixed horizontal anchor.
+function place(r, q, anchorMode, shift) {
+  const contact = [r.legA[2], r.legB[2], ...(r.hands > 0.5 ? [r.armA[2], r.armB[2]] : [])]
   const lowest = Math.max(...contact.map((p) => p.y))
-  const all = [S, H, ...sk.armA, ...sk.armB, ...sk.legA, ...sk.legB]
-  const minX = Math.min(...all.map((p) => p.x)), maxX = Math.max(...all.map((p) => p.x))
-  const off = { x: 100 + q.dx - (minX + maxX) / 2, y: GROUND - 6 - lowest - q.lift }
+  const off = { x: 100 + q.dx - anchorOf(r, anchorMode) - shift, y: GROUND - 6 - lowest - q.lift }
   const mv = (p) => ({ x: p.x + off.x, y: p.y + off.y })
   return {
-    P: mv(P), S: mv(S), H: mv(H), up, tiltDeg: q.lean + q.tilt, lift: q.lift,
-    armA: sk.armA.map(mv), armB: sk.armB.map(mv), legA: sk.legA.map(mv), legB: sk.legB.map(mv),
+    ...r, P: mv(r.P), S: mv(r.S), H: mv(r.H),
+    armA: r.armA.map(mv), armB: r.armB.map(mv), legA: r.legA.map(mv), legB: r.legB.map(mv),
   }
 }
 
@@ -116,47 +126,58 @@ function Figure({ k, look, gender, outfit, color }) {
   const bottom = suit ? pal.dark : '#1e3a8a', bottomB = shade(bottom, 0.8)
   const shoe = suit ? '#f8fafc' : '#334155', sole = suit ? pal.dark : '#1f2937'
 
+  // a limb is ONE path through its joints -> no gaps at elbows / knees
+  const poly = (pts, color, width) => (
+    <path d={`M ${pts.map((p) => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' L ')}`} fill="none" stroke={color} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" />
+  )
   const leg = ([h, kn, f], back) => (
     <g>
       {suit ? (
         <>
-          {L(h, kn, back ? bottomB : bottom, 13)}
-          {L(kn, f, back ? bottomB : bottom, 12)}
-          {!back && L(seg(h, kn, 0.1), seg(kn, f, 0.85), pal.trim, 2)}
+          {poly([h, kn, f], back ? bottomB : bottom, 13)}
+          {!back && poly([seg(h, kn, 0.15), kn, seg(kn, f, 0.8)], pal.trim, 2)}
         </>
       ) : (
         <>
-          {L(h, kn, back ? skinB : skin, 10)}
-          {L(kn, f, back ? skinB : skin, 9)}
-          {L(h, seg(h, kn, 0.55), back ? bottomB : bottom, 14)}
-          {L(seg(kn, f, 0.78), f, '#ffffff', 9)}
+          {poly([h, kn, f], back ? skinB : skin, 10)}
+          {poly([h, seg(h, kn, 0.5)], back ? bottomB : bottom, 15)}
+          {poly([seg(kn, f, 0.8), f], '#ffffff', 10)}
         </>
       )}
       <ellipse cx={f.x} cy={f.y + 1} rx={7.5} ry={5} fill={shoe} stroke={sole} strokeWidth={1.5} />
     </g>
   )
-  const armEl = ([sh, e, h], back) => (
-    <g>
-      {suit ? (
-        <>
-          {L(sh, e, back ? topB : top, 12)}
-          {L(e, h, back ? topB : top, 11)}
-          {!back && L(seg(sh, e, 0.15), seg(e, h, 0.8), pal.trim, 2)}
-          {L(seg(e, h, 0.86), seg(e, h, 0.9), pal.trim, 11)}
-        </>
-      ) : (
-        <>
-          {L(sh, e, back ? skinB : skin, 9)}
-          {L(e, h, back ? skinB : skin, 8)}
-          {L(sh, seg(sh, e, 0.5), back ? topB : top, 12)}
-        </>
-      )}
-      <circle cx={h.x} cy={h.y} r={5} fill={back ? skinB : skin} />
-    </g>
-  )
+  const armEl = ([sh, e, h], back) => {
+    const c = back ? topB : top
+    return (
+      <g>
+        {suit ? (
+          <>
+            {poly([sh, e, h], c, 12)}
+            {!back && poly([seg(sh, e, 0.2), e, seg(e, h, 0.75)], pal.trim, 2)}
+            {poly([seg(e, h, 0.84), seg(e, h, 0.88)], pal.trim, 12)}
+          </>
+        ) : (
+          <>
+            {poly([sh, e, h], back ? skinB : skin, 9)}
+            {poly([sh, seg(sh, e, 0.45)], c, 13)}
+          </>
+        )}
+        {/* shoulder cap joins the sleeve to the body */}
+        <circle cx={sh.x} cy={sh.y} r={7.5} fill={c} />
+        <circle cx={h.x} cy={h.y} r={5} fill={back ? skinB : skin} />
+      </g>
+    )
+  }
   const H = k.H
   const shadowW = Math.max(14, 34 - k.lift * 0.5)
-  const zipA = seg(k.P, k.S, 0.05), zipB = seg(k.P, k.S, 0.88)
+  const { P, S, up, across, w } = k
+  // torso: wider at the shoulders than the waist, rounded corners
+  const torso = [add(S, across, -15 * w), add(S, across, 15 * w), add(P, across, 12 * w), add(P, across, -12 * w)]
+  // pelvis block in the bottoms colour, covers where the legs join
+  const hips = [add(P, across, -12 * w), add(P, across, 12 * w), add(add(P, across, 11 * w), up, -10), add(add(P, across, -11 * w), up, -10)]
+  const shape = (pts, color) => <path d={`M ${pts.map((p) => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' L ')} Z`} fill={color} stroke={color} strokeWidth={8} strokeLinejoin="round" />
+  const hijab = look === 'hijab'
 
   return (
     <g>
@@ -164,15 +185,13 @@ function Figure({ k, look, gender, outfit, color }) {
       {armEl(k.armA, true)}
       {leg(k.legA, true)}
       {leg(k.legB, false)}
-      {/* torso */}
-      {suit ? (
-        <>
-          <line x1={seg(k.P, k.S, 0.02).x} y1={seg(k.P, k.S, 0.02).y} x2={seg(k.P, k.S, 0.7).x} y2={seg(k.P, k.S, 0.7).y} stroke={top} strokeWidth={26} strokeLinecap="butt" />
-          {L(seg(k.P, k.S, 0.6), seg(k.P, k.S, 0.92), top, 26)}
-        </>
-      ) : L(seg(k.P, k.S, -0.05), seg(k.P, k.S, 0.92), top, 26)}
-      {suit && L(zipA, zipB, pal.trim, 2)}
-      {suit && <line x1={seg(k.P, k.S, 0.02).x} y1={seg(k.P, k.S, 0.02).y} x2={seg(k.P, k.S, 0.1).x} y2={seg(k.P, k.S, 0.1).y} stroke={pal.trim} strokeWidth={24} strokeLinecap="butt" />}
+      {shape(hips, bottom)}
+      {poly([S, add(S, up, 8)], skin, 9)}
+      {shape(torso, top)}
+      {suit && w === 1 && poly([add(P, up, 2), add(S, up, -3)], pal.trim, 2)}
+      {suit && poly([add(P, across, -12 * w), add(P, across, 12 * w)], pal.trim, 4)}
+      {/* a hijab drapes over the shoulders, so the front arm goes under it */}
+      {hijab && armEl(k.armB, false)}
       {/* head */}
       <g transform={`rotate(${k.tiltDeg} ${H.x} ${H.y})`}>
         {look === 'hijab' ? (
@@ -203,17 +222,17 @@ function Figure({ k, look, gender, outfit, color }) {
         <circle cx={H.x + 9} cy={H.y + 8} r={2.8} fill="#f9a8a8" opacity=".7" />
         <path d={`M ${H.x - 4.5} ${H.y + 9} Q ${H.x} ${H.y + 13.5} ${H.x + 4.5} ${H.y + 9}`} stroke="#2b1d16" strokeWidth="2" fill="none" strokeLinecap="round" />
       </g>
-      {armEl(k.armB, false)}
+      {!hijab && armEl(k.armB, false)}
     </g>
   )
 }
 
 // <Kid ex="squats" look="ponytail" gender="f" size={160} playing />
-export default function Kid({ ex, look = 'short', gender = 'm', outfit, color, size = 120, playing = true, className = '' }) {
+export default function Kid({ ex, look = 'short', gender = 'm', outfit, color, size = 120, playing = true, phase = null, className = '' }) {
   const mv = MOVES[ex] || MOVES.reach
   const [t, setT] = useState(0.5 / mv.f.length) // still frame = middle of 1st transition
   useEffect(() => {
-    if (!playing) { setT(1 / mv.f.length); return }
+    if (!playing) { setT(phase ?? 1 / mv.f.length); return }
     let raf = 0, last = 0
     const start = performance.now()
     const loop = (now) => {
@@ -222,8 +241,14 @@ export default function Kid({ ex, look = 'short', gender = 'm', outfit, color, s
     }
     raf = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(raf)
-  }, [ex, playing, mv])
-  const k = skeleton(lerpPose(mv.f, t), mv.side)
+  }, [ex, playing, mv, phase])
+  const anchor = mv.anchor || 'feet'
+  const shift = useMemo(() => {
+    const rest = skeletonRaw({ ...BASE, ...mv.f[0] }, mv.side)
+    return bboxCenter(rest) - anchorOf(rest, anchor)
+  }, [mv, anchor])
+  const q = lerpPose(mv.f, t)
+  const k = place(skeletonRaw(q, mv.side), q, anchor, shift)
   return (
     <svg viewBox="0 0 200 240" width={size} height={size * 1.2} className={className} role="img" aria-label={ex}>
       <Figure k={k} look={look} gender={gender} outfit={outfit || (look === 'hijab' ? 'tracksuit' : 'sport')} color={color} />

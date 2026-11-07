@@ -7,7 +7,9 @@
     "captureInput": true
   },
   "plugins": {
-    "SystemBars": { "insetsHandling": "native" },
+    "SystemBars": {
+      "insetsHandling": "native"
+    },
     "SplashScreen": {
       "launchShowDuration": 900,
       "launchAutoHide": true,
@@ -15,6 +17,14 @@
       "androidScaleType": "CENTER_CROP",
       "showSpinner": false
     },
-    "StatusBar": { "overlaysWebView": false, "style": "LIGHT", "backgroundColor": "#FFF4E0" }
+    "StatusBar": {
+      "overlaysWebView": false,
+      "style": "LIGHT",
+      "backgroundColor": "#FFF4E0"
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_nutriloop",
+      "iconColor": "#F2533C"
+    }
   }
 }

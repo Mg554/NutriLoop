@@ -14,3 +14,5 @@ android/app/release/
 keystore.properties
 .DS_Store
 www/
+voice-lines.json
+voice-ids.json

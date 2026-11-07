@@ -4,6 +4,7 @@ import { AVATARS, QUEST_POOL, waterGoalForAge } from './data'
 import { moveGoalForAge } from './modules/move/data'
 import Kid, { PALETTES, kidProps } from './modules/move/Kid'
 import GrowthView from './modules/growth/Growth'
+import RemindersCard from './RemindersCard'
 import { hashPin, newRecoveryCode, normCode, todayStr } from './store'
 import { isNative, shareBackup } from './native'
 import { useBack } from './backStack'
@@ -389,6 +390,7 @@ export function ParentDashboard({ state, actions, onClose, toast }) {
           </label>
         </div>
       </Card>
+      <RemindersCard state={state} actions={actions} toast={toast} />
     </div>
   )
 }

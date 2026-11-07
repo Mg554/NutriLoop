@@ -199,7 +199,7 @@ function Runner({ routine, age, child, onClose, onFinish }) {
   const startWork = (i) => {
     const e = EXERCISES[steps[i]]
     sfx.sparkle()
-    say(`${e.name[lang]}. ${pick(e.how)}`, lang)
+    say([e.name[lang], pick(e.how)], lang)
     begin('work', secFor(e))
   }
 
@@ -207,7 +207,7 @@ function Runner({ routine, age, child, onClose, onFinish }) {
     if (finished.current) return
     finished.current = true
     const secs = Math.round(worked.current)
-    if (complete) { sfx.fanfare(); confetti(); say(pick({ ar: t('done'), en: t('done') }), lang) }
+    if (complete) { sfx.fanfare(); confetti(); say(t('done'), lang) }
     if (complete || secs >= 30) onFinish(secs, complete)
   }
 
