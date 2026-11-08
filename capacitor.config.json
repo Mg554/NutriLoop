@@ -25,6 +25,16 @@
     "LocalNotifications": {
       "smallIcon": "ic_stat_nutriloop",
       "iconColor": "#F2533C"
+    },
+    "CapacitorUpdater": {
+      "autoUpdate": false,
+      "statsUrl": "",
+      "channelUrl": "",
+      "updateUrl": "",
+      "appReadyTimeout": 15000,
+      "resetWhenUpdate": true,
+      "autoDeleteFailed": true,
+      "autoDeletePrevious": true
     }
   }
 }

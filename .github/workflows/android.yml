@@ -36,6 +36,19 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      - name: Version
+        run: |
+          echo "NL_VERSION_CODE=${{ github.run_number }}" >> "$GITHUB_ENV"
+          if [ -n "${{ inputs.version }}" ]; then
+            echo "NL_VERSION_NAME=${{ inputs.version }}" >> "$GITHUB_ENV"
+            echo "NL_RELEASE=v${{ inputs.version }}" >> "$GITHUB_ENV"
+          elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "NL_VERSION_NAME=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+            echo "NL_RELEASE=$GITHUB_REF_NAME" >> "$GITHUB_ENV"
+          else
+            echo "NL_VERSION_NAME=1.0.${{ github.run_number }}" >> "$GITHUB_ENV"
+          fi
+
       - name: Build web app for Android
         run: npm run build:native
 
@@ -59,19 +72,6 @@ jobs:
             echo "::warning::No signing secrets: building an unsigned release APK"
           fi
 
-      - name: Version
-        run: |
-          echo "NL_VERSION_CODE=${{ github.run_number }}" >> "$GITHUB_ENV"
-          if [ -n "${{ inputs.version }}" ]; then
-            echo "NL_VERSION_NAME=${{ inputs.version }}" >> "$GITHUB_ENV"
-            echo "NL_RELEASE=v${{ inputs.version }}" >> "$GITHUB_ENV"
-          elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            echo "NL_VERSION_NAME=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
-            echo "NL_RELEASE=$GITHUB_REF_NAME" >> "$GITHUB_ENV"
-          else
-            echo "NL_VERSION_NAME=1.0.${{ github.run_number }}" >> "$GITHUB_ENV"
-          fi
-
       - name: Build APK
         working-directory: android
         env:
@@ -87,6 +87,9 @@ jobs:
         run: |
           APK=$(ls android/app/build/outputs/apk/release/*.apk | head -1)
           cp "$APK" "NutriLoop-${NL_VERSION_NAME}.apk"
+
+      - name: Web bundle (for silent updates)
+        run: cd www && zip -qr "../bundle-${NL_VERSION_NAME}.zip" .
 
       - uses: actions/upload-artifact@v6
         with:
@@ -112,3 +115,32 @@ jobs:
           name: NutriLoop ${{ env.NL_VERSION_NAME }}
           files: NutriLoop-*.apk
           generate_release_notes: true
+
+      # ---- public update channel (Mg554/NutriLoop-releases) ----
+      - name: Signed update manifest
+        if: env.NL_RELEASE != ''
+        env:
+          NL_OTA_PRIVATE_KEY: ${{ secrets.NL_OTA_PRIVATE_KEY }}
+          RELEASES_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+        run: |
+          if [ -z "$NL_OTA_PRIVATE_KEY" ] || [ -z "$RELEASES_TOKEN" ]; then
+            echo "::warning::NL_OTA_PRIVATE_KEY / RELEASES_TOKEN missing: not publishing to the update channel"
+            echo "NL_PUBLIC=" >> "$GITHUB_ENV"
+          else
+            node scripts/release-manifest.mjs
+            echo "NL_PUBLIC=1" >> "$GITHUB_ENV"
+          fi
+
+      - name: Publish to the update channel
+        if: env.NL_PUBLIC == '1'
+        uses: softprops/action-gh-release@v2
+        with:
+          repository: Mg554/NutriLoop-releases
+          token: ${{ secrets.RELEASES_TOKEN }}
+          tag_name: ${{ env.NL_RELEASE }}
+          name: NutriLoop ${{ env.NL_VERSION_NAME }}
+          make_latest: true
+          files: |
+            NutriLoop-*.apk
+            bundle-*.zip
+            latest.json

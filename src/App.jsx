@@ -5,6 +5,7 @@ import { ParentDashboard, PinGate, RecoverGate } from './Parent'
 import { handleBack } from './backStack'
 import { initNative } from './native'
 import { onReminderTap, scheduleReminders } from './reminders'
+import { autoUpdate, markAppReady } from './updater'
 import { BADGES, STR } from './data'
 import { useStore } from './store'
 import { audio, confetti, sfx } from './sfx'
@@ -40,6 +41,15 @@ export default function App() {
     document.documentElement.lang = lang
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'
   }, [settings.sound, settings.speak, lang])
+
+  // Updates: confirm this version started fine, then look for a newer one
+  // (web updates download silently and apply on the next launch)
+  const [apkUpdate, setApkUpdate] = useState(false)
+  useEffect(() => {
+    markAppReady()
+    const id = setTimeout(() => autoUpdate().then((r) => setApkUpdate(r?.type === 'apk')), 4000)
+    return () => clearTimeout(id)
+  }, [])
 
   // Android: hardware back button + status bar
   useEffect(() => initNative(handleBack), [])
@@ -155,7 +165,7 @@ export default function App() {
           </p>
         )}
         <div className="flex gap-2">
-          <button onClick={() => setScreen('pin')} className="px-5 py-2.5 rounded-full bg-gray-900 text-white text-sm font-bold">👨‍👩‍👧 {STR[lang].parent}</button>
+          <button onClick={() => setScreen('pin')} className="px-5 py-2.5 rounded-full bg-gray-900 text-white text-sm font-bold">👨‍👩‍👧 {STR[lang].parent}{apkUpdate && <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-500 ms-1.5 align-middle" aria-label="update" />}</button>
           <button onClick={toggleLang} className="px-4 py-2.5 rounded-full bg-white border border-[var(--border)] text-sm font-bold">{lang === 'ar' ? 'English' : 'عربي'}</button>
         </div>
       </div>

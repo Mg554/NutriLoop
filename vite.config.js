@@ -22,7 +22,12 @@ export default defineConfig(({ mode }) => {
   }
   return {
     base: './',
-    define: { __NATIVE__: JSON.stringify(native) },
+    define: {
+      __NATIVE__: JSON.stringify(native),
+      // CI sets NL_VERSION_NAME / NL_VERSION_CODE; local builds use package.json
+      __APP_VERSION__: JSON.stringify(process.env.NL_VERSION_NAME || process.env.npm_package_version || 'dev'),
+      __APP_BUILD__: JSON.stringify(Number(process.env.NL_VERSION_CODE || 0)),
+    },
     plugins: [
       react(),
       tailwindcss(),
