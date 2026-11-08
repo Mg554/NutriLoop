@@ -9,6 +9,11 @@ on:
     branches: [main]
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version, e.g. 1.0.0 (empty = test build, no release)'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -57,8 +62,12 @@ jobs:
       - name: Version
         run: |
           echo "NL_VERSION_CODE=${{ github.run_number }}" >> "$GITHUB_ENV"
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+          if [ -n "${{ inputs.version }}" ]; then
+            echo "NL_VERSION_NAME=${{ inputs.version }}" >> "$GITHUB_ENV"
+            echo "NL_RELEASE=v${{ inputs.version }}" >> "$GITHUB_ENV"
+          elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             echo "NL_VERSION_NAME=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+            echo "NL_RELEASE=$GITHUB_REF_NAME" >> "$GITHUB_ENV"
           else
             echo "NL_VERSION_NAME=1.0.${{ github.run_number }}" >> "$GITHUB_ENV"
           fi
@@ -85,9 +94,21 @@ jobs:
           path: NutriLoop-*.apk
           retention-days: 30
 
-      - name: Release (tags only)
-        if: startsWith(github.ref, 'refs/tags/v')
+      # a release needs a SIGNED apk: refuse to publish an unsigned one
+      - name: Check signature before release
+        if: env.NL_RELEASE != ''
+        run: |
+          if [ -z "$NL_KEYSTORE_FILE" ]; then echo "::error::Signing secrets missing - not releasing an unsigned APK"; exit 1; fi
+          APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          "$APKSIGNER" verify --print-certs NutriLoop-*.apk | head -3
+
+      # tag push (vX.Y.Z) or manual run with a version -> GitHub Release (+ tag)
+      - name: Release
+        if: env.NL_RELEASE != ''
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.NL_RELEASE }}
+          target_commitish: ${{ github.sha }}
+          name: NutriLoop ${{ env.NL_VERSION_NAME }}
           files: NutriLoop-*.apk
           generate_release_notes: true
