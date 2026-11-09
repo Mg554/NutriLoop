@@ -1,6 +1,12 @@
 {
-  "1.1.0": {
-    "ar": ["تحديثات تلقائية من داخل التطبيق", "أغلب التحديثات الجاية بتنزل لحالها بدون تثبيت"],
-    "en": ["In-app automatic updates", "Most future updates install silently"]
+  "1.1.1": {
+    "ar": [
+      "تحديثات تلقائية من داخل التطبيق",
+      "أغلب التحديثات الجاية بتنزل لحالها بدون تثبيت"
+    ],
+    "en": [
+      "In-app automatic updates",
+      "Most future updates install silently"
+    ]
   }
 }

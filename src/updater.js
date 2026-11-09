@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------------
 // In-app updates.
-// The public repo Mg554/NutriLoop-releases holds, for every release:
+// The public repo Mg554/NutriLoop_releases holds, for every release:
 //   latest.json  = { m: "<manifest JSON string>", sig: "<ed25519 signature>" }
 //   NutriLoop-X.apk  and  bundle-X.zip (the web app)
 // Flow: fetch latest.json -> verify the signature with the public key below
@@ -18,7 +18,7 @@ import nacl from 'tweetnacl'
 import { isNative } from './native'
 import { NATIVE_LEVEL } from './nativeLevel'
 
-export const MANIFEST_URL = 'https://github.com/Mg554/NutriLoop-releases/releases/latest/download/latest.json'
+export const MANIFEST_URL = 'https://github.com/Mg554/NutriLoop_releases/releases/latest/download/latest.json'
 const PUBLIC_KEY = 'rXAXCbAvAFGfIdYXvWgtZ1YAtesWspAB96sKBJ4JgBE='
 const CHECK_EVERY = 6 * 3600 * 1000
 const KEY = 'nl.update'

@@ -116,7 +116,7 @@ jobs:
           files: NutriLoop-*.apk
           generate_release_notes: true
 
-      # ---- public update channel (Mg554/NutriLoop-releases) ----
+      # ---- public update channel (Mg554/NutriLoop_releases) ----
       - name: Signed update manifest
         if: env.NL_RELEASE != ''
         env:
@@ -135,7 +135,7 @@ jobs:
         if: env.NL_PUBLIC == '1'
         uses: softprops/action-gh-release@v2
         with:
-          repository: Mg554/NutriLoop-releases
+          repository: Mg554/NutriLoop_releases
           token: ${{ secrets.RELEASES_TOKEN }}
           tag_name: ${{ env.NL_RELEASE }}
           name: NutriLoop ${{ env.NL_VERSION_NAME }}

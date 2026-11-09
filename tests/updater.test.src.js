@@ -16,15 +16,15 @@ const dir = mkdtempSync(join(tmpdir(), 'nl-rel-'))
 mkdirSync(join(dir, 'src'))
 copyFileSync('src/nativeLevel.js', join(dir, 'src/nativeLevel.js'))
 copyFileSync('CHANGES.json', join(dir, 'CHANGES.json'))
-writeFileSync(join(dir, 'NutriLoop-1.1.0.apk'), 'fake apk bytes')
-writeFileSync(join(dir, 'bundle-1.1.0.zip'), 'fake zip bytes')
+writeFileSync(join(dir, 'NutriLoop-1.1.1.apk'), 'fake apk bytes')
+writeFileSync(join(dir, 'bundle-1.1.1.zip'), 'fake zip bytes')
 execFileSync('node', [join(process.cwd(), 'scripts/release-manifest.mjs')], {
-  cwd: dir, env: { ...process.env, NODE_PATH: join(process.cwd(), 'node_modules'), NL_VERSION_NAME: '1.1.0', NL_VERSION_CODE: '42', NL_OTA_PRIVATE_KEY: b64(kp.secretKey) },
+  cwd: dir, env: { ...process.env, NODE_PATH: join(process.cwd(), 'node_modules'), NL_VERSION_NAME: '1.1.1', NL_VERSION_CODE: '42', NL_OTA_PRIVATE_KEY: b64(kp.secretKey) },
 })
 const doc = JSON.parse(readFileSync(join(dir, 'latest.json'), 'utf8'))
 const m = verifyManifest(doc, pub)
-check('release script output verifies with the public key', m && m.version === '1.1.0' && m.build === 42, m && `native ${m.native}`)
-check('sha256 + public URLs in manifest', m.apk.sha256.length === 64 && m.bundle.url.includes('NutriLoop-releases/releases/download/v1.1.0/'))
+check('release script output verifies with the public key', m && m.version === '1.1.1' && m.build === 42, m && `native ${m.native}`)
+check('sha256 + public URLs in manifest', m.apk.sha256.length === 64 && m.bundle.url.includes('NutriLoop_releases/releases/download/v1.1.1/'))
 check('release notes included', m.notes.ar.length > 0)
 
 const tampered = { ...doc, m: doc.m.replace('"build":42', '"build":9999') }

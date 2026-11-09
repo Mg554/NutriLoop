@@ -8,7 +8,7 @@ import nacl from 'tweetnacl'
 
 const v = process.env.NL_VERSION_NAME
 const build = Number(process.env.NL_VERSION_CODE)
-const repo = process.env.RELEASES_REPO || 'Mg554/NutriLoop-releases'
+const repo = process.env.RELEASES_REPO || 'Mg554/NutriLoop_releases'
 const key = process.env.NL_OTA_PRIVATE_KEY
 if (!v || !build || !key) throw new Error('missing NL_VERSION_NAME / NL_VERSION_CODE / NL_OTA_PRIVATE_KEY')
 
