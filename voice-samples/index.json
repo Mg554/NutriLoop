@@ -1,0 +1,17 @@
+{
+ "provider": "elevenlabs:ckaeRWMtCV0u0pUT3wX1:eleven_multilingual_v2",
+ "samples": [
+  {
+   "file": null,
+   "model": "eleven_multilingual_v2",
+   "text": "تفاح",
+   "error": "ElevenLabs 402: {\"detail\":{\"type\":\"payment_required\",\"code\":\"paid_plan_required\",\"message\":\"Free users cannot use library voices via the API. Please upgrade your subscription to use this voice.\",\"status\":\"payment_required\",\"request_id\":\"c989528a6ace6836472a23e4383f58e2\"}}"
+  },
+  {
+   "file": null,
+   "model": "eleven_v3",
+   "text": "تفاح",
+   "error": "ElevenLabs 402: {\"detail\":{\"type\":\"payment_required\",\"code\":\"paid_plan_required\",\"message\":\"Free users cannot use library voices via the API. Please upgrade your subscription to use this voice.\",\"status\":\"payment_required\",\"request_id\":\"4e88d2944adb1c33e435643532e212fd\"}}"
+  }
+ ]
+}
