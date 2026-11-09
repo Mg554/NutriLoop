@@ -103,6 +103,9 @@ function GrowthChart({ child, kind, T }) {
 }
 
 // ---------------------------------------------------------------------------
+// Arabic keyboards type ٠-٩ and ٫ or ، : normalise to 0-9 and "."
+const decimalLatin = (v) => v.replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٫,،]/g, '.').replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1').slice(0, 6)
+
 export default function GrowthView({ child, progress, actions, onBack }) {
   const { lang } = useT()
   const T = tx(lang)
@@ -147,8 +150,8 @@ export default function GrowthView({ child, progress, actions, onBack }) {
         <p className="text-xs">{T('العمر:', 'Age:')} <b>{ageText(a.months, T)}</b> {!child.birth && <span className="text-amber-700">({T('تقريبي', 'approx.')})</span>}</p>
         <div className="grid grid-cols-3 gap-2">
           <input id="g-date" type="date" value={form.d} max={todayStr()} onChange={(e) => setForm({ ...form, d: e.target.value })} className={input + ' col-span-3'} dir="ltr" />
-          <input id="g-h" type="number" inputMode="decimal" step="0.1" placeholder={T('الطول سم', 'Height cm')} value={form.h} onChange={(e) => setForm({ ...form, h: e.target.value })} className={input} dir="ltr" />
-          <input id="g-w" type="number" inputMode="decimal" step="0.1" placeholder={T('الوزن كغ', 'Weight kg')} value={form.w} onChange={(e) => setForm({ ...form, w: e.target.value })} className={input} dir="ltr" />
+          <input id="g-h" type="text" inputMode="decimal" autoComplete="off" placeholder={T('الطول سم', 'Height cm')} value={form.h} onChange={(e) => setForm({ ...form, h: decimalLatin(e.target.value) })} className={input} dir="ltr" />
+          <input id="g-w" type="text" inputMode="decimal" autoComplete="off" placeholder={T('الوزن كغ', 'Weight kg')} value={form.w} onChange={(e) => setForm({ ...form, w: decimalLatin(e.target.value) })} className={input} dir="ltr" />
           <button onClick={addMeasure} className="rounded-xl bg-[var(--primary)] text-white font-black text-sm">+ {T('أضف', 'Add')}</button>
         </div>
         {(child.measures || []).length > 0 && (

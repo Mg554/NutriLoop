@@ -72,7 +72,7 @@ export function RecoverGate({ recoveryHash, onOk, onCancel }) {
     if (recoveryHash) {
       if (hashPin(normCode(code)) === recoveryHash) onOk()
       else setErr(t('recoverWrong'))
-    } else if (qs.every(([a, b], i) => +ans[i] === a * b)) onOk()
+    } else if (qs.every(([a, b], i) => +toLatin(ans[i]) === a * b)) onOk()
     else setErr(t('recoverWrong'))
   }
   return (
@@ -120,6 +120,22 @@ function RecoveryCodeCard({ code, onDone }) {
   )
 }
 
+// Number field that can be cleared and retyped (the old controlled
+// type=number input snapped back to the default when emptied) and accepts
+// Arabic-Indic digits from Arabic keyboards. Commits on every valid change,
+// clamps on blur.
+const toLatin = (s) => String(s).replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[^0-9]/g, '')
+function NumField({ id, value, onChange, min, max }) {
+  const [txt, setTxt] = useState(String(value))
+  useEffect(() => { setTxt((t) => (+toLatin(t) === value ? t : String(value))) }, [value])
+  return (
+    <input id={id} type="text" inputMode="numeric" pattern="[0-9]*" autoComplete="off" value={txt}
+      onChange={(e) => { const v = toLatin(e.target.value).slice(0, 5); setTxt(v); if (+v >= min && +v <= max) onChange(+v) }}
+      onBlur={() => { const v = Math.min(max, Math.max(min, +txt || value)); setTxt(String(v)); onChange(v) }}
+      className="mt-1 w-full px-4 py-2.5 rounded-xl border border-[var(--border)] outline-none focus:border-[var(--primary)]" dir="ltr" />
+  )
+}
+
 // ---------------------------------------------------------------------------
 function ChildForm({ initial, onSave, onCancel, onDelete }) {
   const { t } = useT()
@@ -131,7 +147,7 @@ function ChildForm({ initial, onSave, onCancel, onDelete }) {
     <Card className="space-y-4 anim-pop">
       <label className="block">
         <span className="text-xs font-bold text-[var(--text-soft)]">{t('name')}</span>
-        <input value={c.name} onChange={(e) => set('name', e.target.value)} maxLength={20} className="mt-1 w-full px-4 py-2.5 rounded-xl border border-[var(--border)] outline-none focus:border-[var(--primary)]" />
+        <input id="c-name" value={c.name} onChange={(e) => set('name', e.target.value.slice(0, 20))} autoComplete="off" className="mt-1 w-full px-4 py-2.5 rounded-xl border border-[var(--border)] outline-none focus:border-[var(--primary)]" />
       </label>
       <div className="flex gap-2">
         {[['m', '👦', t('boy')], ['f', '👧', t('girl')]].map(([g, e, l]) => (
@@ -176,11 +192,11 @@ function ChildForm({ initial, onSave, onCancel, onDelete }) {
       </div>
       <label className="block">
         <span className="text-xs font-bold text-[var(--text-soft)]">{t('waterGoal')}</span>
-        <input type="number" step={100} min={500} max={3000} value={goal} onChange={(e) => set('waterGoal', +e.target.value || null)} className="mt-1 w-full px-4 py-2.5 rounded-xl border border-[var(--border)]" dir="ltr" />
+        <NumField id="c-water" value={goal} min={500} max={3000} onChange={(v) => set('waterGoal', v)} />
       </label>
       <label className="block">
         <span className="text-xs font-bold text-[var(--text-soft)]">{t('moveGoal')}</span>
-        <input type="number" step={5} min={10} max={180} value={c.moveGoal || moveGoalForAge(c.age)} onChange={(e) => set('moveGoal', +e.target.value || null)} className="mt-1 w-full px-4 py-2.5 rounded-xl border border-[var(--border)]" dir="ltr" />
+        <NumField id="c-move" value={c.moveGoal || moveGoalForAge(c.age)} min={10} max={180} onChange={(v) => set('moveGoal', v)} />
       </label>
       {/* sleep: bedtime is suggested from wake-up time and the age-based sleep need */}
       <div className="grid grid-cols-2 gap-2">

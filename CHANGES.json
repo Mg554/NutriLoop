@@ -68,5 +68,15 @@
       "📈 Comparison with last week, and browse earlier weeks",
       "📤 Share the report, and 🔔 a weekly Friday reminder"
     ]
+  },
+  "1.4.1": {
+    "ar": [
+      "⌨️ إصلاح: الكتابة بالكيبورد ما كانت تشتغل على بعض الموبايلات (الاسم والأرقام)",
+      "🔢 خانات المي والحركة والطول والوزن بتقبل الأرقام العربية وبتنمسح وتنكتب من جديد"
+    ],
+    "en": [
+      "⌨️ Fix: typing did not work on some phones' keyboards (name and numbers)",
+      "🔢 Water, movement, height and weight fields accept Arabic digits and can be cleared and retyped"
+    ]
   }
 }

@@ -32,7 +32,7 @@ export function newRecoveryCode() {
   const c = Array.from(r, (n) => A[n % A.length]).join('')
   return `${c.slice(0, 4)}-${c.slice(4)}`
 }
-export const normCode = (s) => (s || '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+export const normCode = (s) => (s || '').replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).toUpperCase().replace(/[^A-Z0-9]/g, '')
 
 export const hashPin = (pin) => {
   let h = 2166136261
