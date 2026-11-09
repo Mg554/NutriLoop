@@ -1,10 +1,22 @@
-# Generates the recorded Arabic voice clips with Piper (open-source TTS,
-# voice ar_JO-kareem-medium) and commits them to public/voice/.
-# Runs when the spoken phrases change, or by hand (Actions -> Voice clips).
+# Generates the recorded Arabic voice clips and commits them.
+#   ElevenLabs when the ELEVENLABS_API_KEY / ELEVENLABS_VOICE_ID secrets exist,
+#   otherwise Piper (open-source, ar_JO-kareem-medium).
+# Run by hand: Actions -> Voice clips -> mode "samples" (a few lines to listen to,
+# committed to voice-samples/) or "full" (all phrases -> public/voice/).
+# Also runs on push when the spoken phrases change (full, incremental).
 name: Voice clips
 
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: samples or full
+        default: samples
+        type: choice
+        options: [samples, full]
+      models:
+        description: ElevenLabs model(s) for samples, comma separated
+        default: eleven_multilingual_v2,eleven_v3
   push:
     branches: [main]
     paths:
@@ -13,7 +25,6 @@ on:
       - src/speechText.js
       - scripts/speech-lines.src.js
       - scripts/synth.py
-      - .github/workflows/voice.yml
 
 permissions:
   contents: write
@@ -22,6 +33,11 @@ permissions:
 concurrency:
   group: voice
   cancel-in-progress: false
+
+env:
+  ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+  ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}
+  MODE: ${{ inputs.mode || 'full' }}
 
 jobs:
   voice:
@@ -46,39 +62,49 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install Piper
+      - name: Tools
         run: |
-          pip install --quiet piper-tts
           sudo apt-get install -y -qq ffmpeg >/dev/null
-          pip show piper-tts | head -2
+          if [ -z "$ELEVENLABS_API_KEY" ]; then
+            pip install --quiet piper-tts
+            base=https://huggingface.co/rhasspy/piper-voices/resolve/main/ar/ar_JO/kareem/medium
+            curl -sSLf -o ar.onnx      "$base/ar_JO-kareem-medium.onnx"
+            curl -sSLf -o ar.onnx.json "$base/ar_JO-kareem-medium.onnx.json"
+            echo "provider: Piper"
+          else
+            echo "provider: ElevenLabs"
+          fi
 
-      - name: Download voice model
+      - name: Samples
+        if: env.MODE == 'samples'
+        env:
+          VOICE_SAMPLES: '1'
+          ELEVENLABS_MODELS: ${{ inputs.models }}
         run: |
-          base=https://huggingface.co/rhasspy/piper-voices/resolve/main/ar/ar_JO/kareem/medium
-          curl -sSLf -o ar.onnx      "$base/ar_JO-kareem-medium.onnx"
-          curl -sSLf -o ar.onnx.json "$base/ar_JO-kareem-medium.onnx.json"
-          ls -la ar.onnx*
+          rm -rf voice-samples
+          python scripts/synth.py voice-lines.json voice-samples ar.onnx
 
-      - name: Synthesise
-        run: python scripts/synth.py voice-lines.json public/voice ar.onnx
+      - name: All clips
+        if: env.MODE == 'full'
+        run: |
+          python scripts/synth.py voice-lines.json public/voice ar.onnx
+          node scripts/voice-manifest.mjs
 
-      - name: Manifest
-        run: node scripts/voice-manifest.mjs
-
-      - name: Commit clips
+      - name: Commit
         run: |
           git config user.name  "nutriloop-bot"
           git config user.email "nutriloop-bot@users.noreply.github.com"
-          git add public/voice src/voiceClips.js
+          if [ "$MODE" = samples ]; then git add -A voice-samples; MSG="voice: samples"; else git add -A public/voice src/voiceClips.js; MSG="voice: regenerate Arabic clips"; fi
           if git diff --cached --quiet; then echo "no changes"; exit 0; fi
-          git commit -m "voice: regenerate Arabic clips (Piper ar_JO-kareem)"
+          git commit -m "$MSG"
+          git pull --rebase -q origin main
           git push
 
       # pushes made with GITHUB_TOKEN don't trigger other workflows,
-      # so start the APK build explicitly when clips changed
-      - name: Rebuild APK with the new clips
-        if: success()
+      # so start the APK/web build explicitly when real clips changed
+      - name: Rebuild app with the new clips
+        if: env.MODE == 'full'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if git log -1 --pretty=%s | grep -q "^voice:"; then gh workflow run android.yml --ref main; fi
+          if git log -1 --pretty=%s | grep -q "^voice: regenerate"; then gh workflow run android.yml --ref main; fi
