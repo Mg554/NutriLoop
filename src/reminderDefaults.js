@@ -8,6 +8,10 @@ export const REMINDERS = [
   { id: 'move', tab: 'move', def: '17:30', move: true },
   { id: 'dinner', tab: 'plate', def: '19:30', meal: 3 },
   { id: 'bedtime', tab: 'night', def: '20:00', night: true },
+  // Ramadan: times follow fajr / maghrib (offset in minutes), only on Ramadan days
+  { id: 'suhoor', tab: 'today', def: '', ramadan: 'fajr', offset: -45 },
+  { id: 'iftar', tab: 'today', def: '', ramadan: 'maghrib', offset: -10 },
+  { id: 'rwater', tab: 'today', def: '', ramadan: 'maghrib', offset: 150 },
 ]
 export const defaultReminders = () => ({
   on: false,

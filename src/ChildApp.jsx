@@ -1,9 +1,10 @@
 // The child's side of the app: quests, plate builder, sort game, diary, rewards.
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { BADGES, FOODS, MANNERS, QUEST_POOL, RANKS, RANKS_F, waterGoalForAge } from './data'
+import { BADGES, FOODS, MANNERS, questDef, RANKS, RANKS_F, waterGoalForAge } from './data'
 import MoveTab from './modules/move/Move'
 import PortionsCard from './modules/growth/PortionsCard'
 import { NightCard, NightJourney } from './modules/night/Night'
+import RamadanCard, { RamadanSoon } from './modules/ramadan/Ramadan'
 import { portionOf } from './modules/growth/portions'
 import { analysePlate, getFood, levelInfo, liveStreak, sectionOf } from './store'
 import { say, sfx } from './sfx'
@@ -25,6 +26,8 @@ export default function ChildApp({ child, progress, settings, actions, onSwitch,
     if (deepTab.tab === 'night') { setTab('today'); setNightOpen(true) } else setTab(deepTab.tab)
   }, [deepTab])
   const schoolDays = settings.reminders?.schoolDays
+  // Eid: celebrate once per child per year (1-3 Shawwal)
+  useEffect(() => { actions.celebrateEid(child.id) }, [child.id]) // eslint-disable-line react-hooks/exhaustive-deps
   useBack(onSwitch, 0)
   useBack(() => setTab(tab === 'diary' ? 'plate' : 'today'), 1, tab !== 'today')
   const lvl = levelInfo(progress.xp)
@@ -104,6 +107,8 @@ function Today({ child, progress, settings, actions, onNight }) {
 
   return (
     <div className="space-y-4 anim-pop">
+      <RamadanSoon settings={settings} />
+      <RamadanCard {...{ child, progress, settings, actions }} />
       {evening && night}
       <div className="flex items-center justify-between">
         <div>
@@ -117,7 +122,7 @@ function Today({ child, progress, settings, actions, onNight }) {
 
       <div className="space-y-2.5">
         {day.quests.map((q) => {
-          const def = QUEST_POOL.find((x) => x.id === q.id)
+          const def = questDef(q.id)
           if (!def) return null
           return (
             <button

@@ -1,10 +1,11 @@
 // Parent area: PIN gate, children profiles, approvals, weekly summary, settings, backup.
 import { useEffect, useRef, useState } from 'react'
-import { AVATARS, QUEST_POOL, waterGoalForAge } from './data'
+import { AVATARS, questDef, waterGoalForAge } from './data'
 import { moveGoalForAge } from './modules/move/data'
 import Kid, { PALETTES, kidProps } from './modules/move/Kid'
 import GrowthView from './modules/growth/Growth'
 import RemindersCard from './RemindersCard'
+import RamadanSettings from './modules/ramadan/RamadanSettings'
 import { GRATITUDE, bedtimeFor, sleepRangeForAge } from './modules/night/data'
 import UpdatesCard from './UpdatesCard'
 import { hashPin, newRecoveryCode, normCode, todayStr } from './store'
@@ -388,7 +389,7 @@ export function ParentDashboard({ state, actions, onClose, toast }) {
             <p className="text-sm text-[var(--text-soft)]">{t('noPending')}</p>
           ) : (
             pending.map(({ child, q }) => {
-              const def = QUEST_POOL.find((x) => x.id === q.id)
+              const def = questDef(q.id)
               return (
                 <Card key={child.id + q.id} className="flex items-center gap-2 !p-3">
                   <span className="text-2xl">{child.avatar}</span>
@@ -422,6 +423,7 @@ export function ParentDashboard({ state, actions, onClose, toast }) {
         </div>
       </Card>
       <RemindersCard state={state} actions={actions} toast={toast} />
+      <RamadanSettings state={state} actions={actions} />
       <UpdatesCard toast={toast} />
     </div>
   )

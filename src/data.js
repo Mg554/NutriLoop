@@ -5,6 +5,7 @@
 
 import { MOVE_STR } from './modules/move/data'
 import { NIGHT_STR } from './modules/night/data'
+import { RAMADAN_QUESTS, RAMADAN_STR } from './modules/ramadan/data'
 
 // Plate sections (MyPlate): veg+fruit = half, grain = ¼, protein = ¼, dairy = cup on the side.
 export const SECTIONS = ['veg', 'grain', 'protein', 'dairy']
@@ -112,6 +113,9 @@ export const FOODS = [
 export const sectionOf = (food) => (food.category === 'fruit' ? 'veg' : food.category)
 
 // Quest pool — three are drawn per child per calendar day.
+// lookup across normal + Ramadan quests
+export const questDef = (id) => QUEST_POOL.find((q) => q.id === id) || RAMADAN_QUESTS.find((q) => q.id === id)
+
 export const QUEST_POOL = [
   { id: 'fruit2', emoji: '🍎', xp: 20, title: { en: 'Fruit Ninja', ar: 'نينجا الفواكه' }, desc: { en: 'Eat 2 different fruits today', ar: { m: 'كُل نوعين مختلفين من الفواكه اليوم', f: 'كُلي نوعين مختلفين من الفواكه اليوم' } } },
   { id: 'crunch', emoji: '🥕', xp: 25, title: { en: 'Crunch Tester', ar: 'مختبر القرمشة' }, desc: { en: 'Eat something crunchy: carrot, cucumber or apple', ar: { m: 'كُل إشي مقرمش: جزر، خيار أو تفاح', f: 'كُلي إشي مقرمش: جزر، خيار أو تفاح' } } },
@@ -143,6 +147,9 @@ export const BADGES = [
   { id: 'night3', emoji: '🌙', title: { ar: 'ليالي النجوم', en: 'Star Nights' }, desc: { ar: '٣ ليالي رحلة نجوم كاملة', en: '3 full Star Journeys' }, check: (s) => s.nightsDone >= 3 },
   { id: 'night10', emoji: '🌌', title: { ar: 'سيّد الكواكب', en: 'Constellation Keeper' }, desc: { ar: '١٠ ليالي نجوم', en: '10 Star nights' }, check: (s) => s.nightsDone >= 10 },
   { id: 'teeth', emoji: '🦷', title: { ar: 'أسنان لامعة', en: 'Shiny Teeth' }, desc: { ar: 'فرّشت أسنانك ١٤ مرة', en: 'Brushed 14 times' }, check: (s) => s.brushCount >= 14 },
+  { id: 'lantern', emoji: '🏮', title: { ar: 'أول فانوس', en: 'First Lantern' }, desc: { ar: 'أول يوم صيام (كامل أو عصافير)', en: 'First fasting day (full or bird)' }, check: (s) => Object.values(s.ramadanFasts || {}).some((v) => v !== 'none') },
+  { id: 'ramadan10', emoji: '🌙', title: { ar: 'عشرة فوانيس', en: 'Ten Lanterns' }, desc: { ar: '١٠ أيام صيام برمضان', en: '10 fasting days' }, check: (s) => Object.values(s.ramadanFasts || {}).filter((v) => v !== 'none').length >= 10 },
+  { id: 'eid', emoji: '🎉', title: { ar: 'فرحة العيد', en: 'Eid Joy' }, desc: { ar: 'احتفلت بالعيد مع NutriLoop', en: 'Celebrated Eid' }, check: (s) => (s.eidYears || []).length >= 1 },
   { id: 'streak7', emoji: '👑', title: { ar: 'أسبوع كامل', en: 'Full Week' }, desc: { ar: '٧ أيام ورا بعض', en: '7 days in a row' }, check: (s) => s.bestStreak >= 7 },
 ]
 
@@ -305,6 +312,6 @@ export const STR = {
   },
 }
 
-for (const l of ['ar', 'en']) for (const k of [...Object.keys(MOVE_STR[l]), ...Object.keys(NIGHT_STR[l])]) if (k in STR[l]) console.warn('string key clash', k)
-Object.assign(STR.ar, MOVE_STR.ar, NIGHT_STR.ar)
-Object.assign(STR.en, MOVE_STR.en, NIGHT_STR.en)
+for (const l of ['ar', 'en']) for (const k of [...Object.keys(MOVE_STR[l]), ...Object.keys(NIGHT_STR[l]), ...Object.keys(RAMADAN_STR[l])]) if (k in STR[l]) console.warn('string key clash', k)
+Object.assign(STR.ar, MOVE_STR.ar, NIGHT_STR.ar, RAMADAN_STR.ar)
+Object.assign(STR.en, MOVE_STR.en, NIGHT_STR.en, RAMADAN_STR.en)

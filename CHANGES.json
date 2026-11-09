@@ -34,5 +34,23 @@
       "⏰ Age-based bedtime and bedtime reminder",
       "🏅 3 new badges"
     ]
+  },
+  "1.3.0": {
+    "ar": [
+      "🌙 وضع رمضان: يشتغل لحاله مع أول رمضان (أو يدويًا من الأهل)",
+      "⏳ عدّاد للإفطار والسحور حسب مدينتك (الخليل وباقي المدن)",
+      "🏮 جدار ٣٠ فانوس بيضوي مع كل يوم صيام، وصيام العصافير محسوب",
+      "💧 خطة مي من الإفطار للسحور، ونصايح لطبق الإفطار والسحور",
+      "🤲 دعاء الإفطار، ومهمات رمضانية يومية",
+      "🔔 تذكير قبل السحور وقبل الإفطار، و🎉 مفاجأة العيد"
+    ],
+    "en": [
+      "🌙 Ramadan mode: turns on automatically (or manually by parents)",
+      "⏳ Iftar and suhoor countdown for your city",
+      "🏮 A wall of 30 lanterns that light up with each fast (bird fasts count)",
+      "💧 Water plan from iftar to suhoor, iftar and suhoor plate tips",
+      "🤲 Iftar dua and daily Ramadan quests",
+      "🔔 Suhoor and iftar reminders, and 🎉 an Eid surprise"
+    ]
   }
 }

@@ -4,7 +4,8 @@
 // Side effects run AFTER the state is committed, never inside setState.
 // ---------------------------------------------------------------------------
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { BADGES, FOODS, MANNERS, QUEST_POOL, sectionOf, waterGoalForAge } from './data'
+import { BADGES, FOODS, MANNERS, QUEST_POOL, questDef, sectionOf, waterGoalForAge } from './data'
+import { FAST_CHOICES, RAMADAN_QUESTS, defaultRamadan, hijri, isEidDay, ramadanActive } from './modules/ramadan/data'
 import { OUTDOOR_MIN, moveGoalForAge } from './modules/move/data'
 import { portionOf } from './modules/growth/portions'
 import { isNative, nativeLoad, nativeSave } from './native'
@@ -40,10 +41,10 @@ export const hashPin = (pin) => {
 }
 
 // Deterministic daily quest pick per child (same 3 quests all day, new ones tomorrow).
-function dailyQuests(childId, date) {
+function dailyQuests(childId, date, ramadan = false) {
   let seed = 0
   for (const ch of childId + date) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0
-  const pool = [...QUEST_POOL]
+  const pool = [...(ramadan ? RAMADAN_QUESTS : QUEST_POOL)]
   const out = []
   while (out.length < 3) {
     seed = (seed * 1103515245 + 12345) >>> 0
@@ -59,6 +60,7 @@ const newProgress = () => ({
   platesSaved: 0, balancedPlates: 0, completePlates: 0, waterGoalDays: 0,
   routines: {}, routinesDone: 0, moveGoalDays: 0, mannersDays: 0,
   nightsDone: 0, brushCount: 0, nightLog: [], // bedtime routine
+  ramadanFasts: {}, eidYears: [], // Ramadan mode
   history: {}, // date -> { plates, quests, water, missing: {veg,grain,protein,dairy} }
   day: null, // { date, quests, water, platesXp, gameRuns, waterHit }
 })
@@ -66,7 +68,7 @@ const newProgress = () => ({
 const initial = () => ({
   v: 2,
   pin: null,
-  settings: { lang: 'ar', sound: true, speak: true, approval: false, camera: false, reminders: defaultReminders() },
+  settings: { lang: 'ar', sound: true, speak: true, approval: false, camera: false, reminders: defaultReminders(), ramadan: defaultRamadan() },
   children: [],
   progress: {},
 })
@@ -121,10 +123,11 @@ export function analysePlate(items) {
 }
 
 // ---- helpers working on a draft progress object ---------------------------
-function ensureDay(p, child, date) {
-  if (p.day && p.day.quests.some((q) => !QUEST_POOL.find((x) => x.id === q.id))) p.day.quests = dailyQuests(child.id, date)
+function ensureDay(p, child, date, settings) {
+  const rmd = ramadanActive(settings?.ramadan)
+  if (p.day && p.day.quests.some((q) => !questDef(q.id))) p.day.quests = dailyQuests(child.id, date, rmd)
   if (!p.day || p.day.date !== date) {
-    p.day = { date, quests: dailyQuests(child.id, date), water: 0, platesXp: 0, gameRuns: 0, waterHit: false }
+    p.day = { date, quests: dailyQuests(child.id, date, rmd), water: 0, platesXp: 0, gameRuns: 0, waterHit: false }
   }
   // fill fields added in newer versions (old saves)
   for (const [k, v] of Object.entries(newProgress())) if (p[k] === undefined) p[k] = v
@@ -246,7 +249,7 @@ export function useStore() {
       if (!s.progress[childId]) s.progress[childId] = newProgress()
       const p = s.progress[childId]
       const date = todayStr()
-      ensureDay(p, child, date)
+      ensureDay(p, child, date, s.settings)
       fn(p, ev, { s, child, date })
       checkBadges(p, ev)
     })
@@ -258,7 +261,7 @@ export function useStore() {
     toggleQuest: (childId, questId) =>
       withChild(childId, (p, ev, { s, date }) => {
         const q = p.day.quests.find((x) => x.id === questId)
-        const def = QUEST_POOL.find((x) => x.id === questId)
+        const def = questDef(questId)
         if (!q || !def) return
         if (s.settings.approval) {
           if (q.done) return // approved quests can't be undone by the child
@@ -376,6 +379,47 @@ export function useStore() {
         }
       }),
 
+    // ---- Ramadan -------------------------------------------------------------
+    // choice: 'full' | 'bird' | 'none'. Changing it later adjusts the XP.
+    setFast: (childId, choice) =>
+      withChild(childId, (p, ev, { date }) => {
+        const prev = p.ramadanFasts[date]
+        if (prev === choice) return
+        const xpOf = (c) => FAST_CHOICES.find((x) => x.id === c)?.xp || 0
+        p.ramadanFasts[date] = choice
+        addXp(p, xpOf(choice) - xpOf(prev), ev)
+        if (!prev && choice !== 'none') { growPlant(p, 15, ev); ev.push({ type: 'questDone' }) }
+        markActive(p, date, ev)
+      }),
+    // water plan slot between iftar and suhoor; each glass also fills the water battery
+    ramadanWater: (childId, slot) =>
+      withChild(childId, (p, ev, { child, date }) => {
+        p.day.rwater ||= {}
+        const on = !p.day.rwater[slot]
+        p.day.rwater[slot] = on
+        const goal = child.waterGoal || waterGoalForAge(child.age)
+        p.day.water = Math.max(0, p.day.water + (on ? 250 : -250))
+        p.history[date].water = p.day.water
+        ev.push({ type: on ? 'water' : 'undo' })
+        if (on && !p.day.waterHit && p.day.water >= goal) {
+          p.day.waterHit = true
+          p.waterGoalDays += 1
+          addXp(p, 30, ev)
+          ev.push({ type: 'waterGoal' })
+        }
+      }),
+    // once per Eid (1-3 Shawwal), per child
+    celebrateEid: (childId) =>
+      withChild(childId, (p, ev, { s }) => {
+        const off = s.settings.ramadan?.hijriOffset || 0
+        if (!isEidDay(new Date(), off)) return
+        const y = hijri(new Date(), off).y
+        if (p.eidYears.includes(y)) return
+        p.eidYears.push(y)
+        addXp(p, 50, ev)
+        ev.push({ type: 'eid' })
+      }),
+
     // ---- bedtime "Star Journey" --------------------------------------------
     nightStep: (childId, stepId, extra) =>
       withChild(childId, (p, ev, { date }) => {
@@ -415,7 +459,7 @@ export function useStore() {
     approveQuest: (childId, questId, ok) =>
       withChild(childId, (p, ev, { date }) => {
         const q = p.day.quests.find((x) => x.id === questId)
-        const def = QUEST_POOL.find((x) => x.id === questId)
+        const def = questDef(questId)
         if (!q || !q.pending) return
         q.pending = false
         if (ok) {

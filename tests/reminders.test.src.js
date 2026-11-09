@@ -1,6 +1,7 @@
 import { scheduleReminders, defaultReminders, REMINDERS } from '../src/reminders'
 import { scheduled } from './mocks/local-notifications'
 import { todayStr } from '../src/store'
+import { fastTimes, defaultRamadan } from '../src/modules/ramadan/data'
 
 const d = todayStr()
 const base = (over = {}) => ({
@@ -18,7 +19,7 @@ const check = (name, cond, info = '') => { ok.push(cond); console.log(cond ? '�
 const todays = () => scheduled.filter((n) => new Date(n.schedule.at).toDateString() === six.toDateString()).map((n) => n.id - 7000)
 
 await scheduleReminders(base())
-const N = REMINDERS.length
+const N = REMINDERS.filter((r) => !r.ramadan).length  // Ramadan ones only fire in Ramadan
 check(`${N} reminders x 3 days`, scheduled.length === N * 3, scheduled.length)
 check('girl wording', scheduled[1].body.includes('اعملي') && scheduled[1].body.includes('تولين'), scheduled[1].body)
 
@@ -48,4 +49,19 @@ check('new reminder types default to on for old saved settings', scheduled.some(
 const s7 = base(); s7.progress.a.day.night = { done: true }
 await scheduleReminders(s7)
 check('bedtime reminder skipped once tonight is done', !todays().includes(7), todays())
+// Ramadan days: daytime meal/water/move reminders pause; suhoor/iftar/water-after-taraweeh follow prayer times
+const s8 = base(); s8.settings.ramadan = { ...defaultRamadan(), mode: 'on' }
+await scheduleReminders(s8)
+const ids = (off) => scheduled.filter((n) => Math.floor((n.id - 7000) / 50) === off).map((n) => REMINDERS[(n.id - 7000) % 50].id).sort()
+check('Ramadan tomorrow: only morning, bedtime, suhoor, iftar, rwater', JSON.stringify(ids(1)) === JSON.stringify(['bedtime', 'iftar', 'morning', 'rwater', 'suhoor']), ids(1).join(','))
+const tmr = new Date(); tmr.setDate(tmr.getDate() + 1); tmr.setHours(12, 0, 0, 0)
+const ft = fastTimes(s8.settings.ramadan, tmr)
+const suh = scheduled.find((n) => n.id === 7000 + 50 + REMINDERS.findIndex((r) => r.id === 'suhoor'))
+const ift = scheduled.find((n) => n.id === 7000 + 50 + REMINDERS.findIndex((r) => r.id === 'iftar'))
+check('suhoor = fajr - 45 min', suh && new Date(suh.schedule.at).getTime() === ft.fajr.getTime() - 45 * 60000, suh && new Date(suh.schedule.at).toTimeString().slice(0, 5))
+check('iftar = maghrib - 10 min', ift && new Date(ift.schedule.at).getTime() === ft.maghrib.getTime() - 10 * 60000, ift && new Date(ift.schedule.at).toTimeString().slice(0, 5))
+check('girl wording in Ramadan text', ift.body.includes('جهّزي'), ift.body)
+const s9 = base(); s9.settings.ramadan = { ...defaultRamadan(), mode: 'off' }
+await scheduleReminders(s9)
+check('Ramadan off -> no Ramadan reminders', !scheduled.some((n) => REMINDERS[(n.id - 7000) % 50].ramadan))
 const pass = ok.every(Boolean); console.log(pass ? 'PASS' : 'FAIL'); process.exit(pass ? 0 : 1)

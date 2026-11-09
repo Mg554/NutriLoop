@@ -107,6 +107,7 @@ export default function App() {
         case 'undo': sfx.whoosh(); break
         case 'plateSaved': sfx.fanfare(); confetti(); toast(tr('saved') + (e.xp ? ` +${e.xp} XP` : '')); break
         case 'gameOver': if (e.xp) { sfx.fanfare(); confetti() } break
+        case 'eid': setTimeout(() => { sfx.fanfare(); confetti(); setTimeout(confetti, 700); setModal({ emoji: '🎉🌙', title: tr('eid'), body: resolve(STR[lang].eidSub, gender, { name: child?.name || '' }), sub: '+50 XP' }) }, 800); break
         case 'toast': if (e.key === 'streakUp') toast(`🔥 ${e.n} ${tr('streak')}`); break
       }
     }

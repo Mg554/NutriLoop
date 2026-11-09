@@ -5,8 +5,8 @@ import { REMINDERS, defaultReminders, enableNotifications, testReminder } from '
 import { Card, useT } from './ui'
 
 const NAMES = {
-  ar: { morning: '🏫 روتين الصباح', breakfast: '🍳 الفطور', water1: '💧 مي (١)', lunch: '🍽️ الغدا', water2: '💧 مي (٢)', move: '⚡ الحركة', dinner: '🍲 العشا', bedtime: '⭐ رحلة النجوم' },
-  en: { morning: '🏫 Morning routine', breakfast: '🍳 Breakfast', water1: '💧 Water (1)', lunch: '🍽️ Lunch', water2: '💧 Water (2)', move: '⚡ Movement', dinner: '🍲 Dinner', bedtime: '⭐ Star Journey' },
+  ar: { morning: '🏫 روتين الصباح', breakfast: '🍳 الفطور', water1: '💧 مي (١)', lunch: '🍽️ الغدا', water2: '💧 مي (٢)', move: '⚡ الحركة', dinner: '🍲 العشا', bedtime: '⭐ رحلة النجوم', suhoor: '🥣 السحور (رمضان)', iftar: '🌅 الإفطار (رمضان)', rwater: '💧 مي بعد التراويح (رمضان)' },
+  en: { morning: '🏫 Morning routine', breakfast: '🍳 Breakfast', water1: '💧 Water (1)', lunch: '🍽️ Lunch', water2: '💧 Water (2)', move: '⚡ Movement', dinner: '🍲 Dinner', bedtime: '⭐ Star Journey', suhoor: '🥣 Suhoor (Ramadan)', iftar: '🌅 Iftar (Ramadan)', rwater: '💧 Water after taraweeh (Ramadan)' },
 }
 const DAYS = { ar: ['ح', 'ن', 'ث', 'ر', 'خ', 'ج', 'س'], en: ['S', 'M', 'T', 'W', 'T', 'F', 'S'] }
 
@@ -48,8 +48,12 @@ export default function RemindersCard({ state, actions, toast }) {
                 <div key={r.id} className="flex items-center gap-2 py-1.5">
                   <input id={`rem-${r.id}`} type="checkbox" checked={it.on} onChange={(e) => setItem(r.id, { on: e.target.checked })} className="w-5 h-5 accent-[var(--primary)]" />
                   <label htmlFor={`rem-${r.id}`} className={`flex-1 text-sm font-bold ${it.on ? '' : 'opacity-40'}`}>{NAMES[lang][r.id]}</label>
-                  <input id={`rem-${r.id}-t`} type="time" value={it.t} disabled={!it.on} onChange={(e) => e.target.value && setItem(r.id, { t: e.target.value })}
-                    className="px-2 py-1 rounded-lg border border-[var(--border)] text-sm disabled:opacity-40" dir="ltr" />
+                  {r.ramadan ? (
+                    <span className="text-[11px] text-[var(--text-soft)]">{lang === 'ar' ? (r.ramadan === 'fajr' ? 'قبل الفجر ٤٥ د' : r.offset < 0 ? 'قبل المغرب ١٠ د' : 'بعد المغرب بساعتين ونص') : r.ramadan === 'fajr' ? '45 min before fajr' : r.offset < 0 ? '10 min before maghrib' : '2.5 h after maghrib'}</span>
+                  ) : (
+                    <input id={`rem-${r.id}-t`} type="time" value={it.t} disabled={!it.on} onChange={(e) => e.target.value && setItem(r.id, { t: e.target.value })}
+                      className="px-2 py-1 rounded-lg border border-[var(--border)] text-sm disabled:opacity-40" dir="ltr" />
+                  )}
                 </div>
               )
             })}
