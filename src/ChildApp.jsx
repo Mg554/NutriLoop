@@ -15,7 +15,7 @@ const stageOf = (plant) => Math.min(4, Math.floor(plant / 25))
 const STAGE_EMOJI = ['🫘', '🌱', '🌿', '🌸', '🌳']
 
 // ---------------------------------------------------------------------------
-export default function ChildApp({ child, progress, settings, actions, onSwitch, onLang, toast, deepTab }) {
+export default function ChildApp({ child, progress, settings, actions, onSwitch, onLang, onMute, toast, deepTab }) {
   const { t, lang, gender } = useT()
   const [tab, setTab] = useState(deepTab?.tab || 'today')
   useEffect(() => { if (deepTab?.tab) setTab(deepTab.tab) }, [deepTab])
@@ -41,8 +41,8 @@ export default function ChildApp({ child, progress, settings, actions, onSwitch,
           <div className="w-11 h-11 shrink-0 rounded-2xl bg-amber-100 border border-[var(--border)] flex items-center justify-center text-2xl">{child.avatar}</div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className="font-black text-sm truncate">{child.name}</span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--primary-soft)] text-[var(--primary)] whitespace-nowrap">Lv {lvl.level} • {rank}</span>
+              <span className="font-black text-sm truncate min-w-[3.5rem]">{child.name}</span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--primary-soft)] text-[var(--primary)] whitespace-nowrap">Lv {lvl.level}<span className="hidden min-[430px]:inline"> • {rank}</span></span>
             </div>
             <div className="w-28 h-1.5 bg-gray-200 rounded-full mt-1 overflow-hidden">
               <div className="h-full bg-[var(--primary)] transition-all duration-500" style={{ width: `${lvl.percent}%` }} />
@@ -52,6 +52,7 @@ export default function ChildApp({ child, progress, settings, actions, onSwitch,
         <div className="flex items-center gap-1.5 shrink-0">
           <span className="px-2.5 py-1 rounded-full bg-[var(--surface-2)] border border-[var(--border)] text-xs font-black text-[var(--primary)]">✨ {progress.xp}</span>
           <span className="px-2.5 py-1 rounded-full bg-orange-50 border border-orange-200 text-xs font-black">🔥 {liveStreak(progress)}</span>
+          <button onClick={onMute} aria-label={settings.mute ? 'unmute' : 'mute'} className={`w-8 h-7 rounded-full border text-sm ${settings.mute ? 'bg-gray-800 border-gray-800' : 'bg-white border-[var(--border)]'}`}>{settings.mute ? '🔇' : '🔊'}</button>
           <button onClick={onLang} className="px-2 py-1 rounded-full bg-white border border-[var(--border)] text-xs font-black">{lang === 'ar' ? 'EN' : 'ع'}</button>
         </div>
       </header>

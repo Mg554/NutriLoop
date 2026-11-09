@@ -8,5 +8,13 @@
       "In-app automatic updates",
       "Most future updates install silently"
     ]
+  },
+  "1.1.2": {
+    "ar": [
+      "زر كتم وتشغيل الصوت 🔊 عند الطفل وبلوحة الأهل"
+    ],
+    "en": [
+      "Mute / unmute button 🔊 for kids and parents"
+    ]
   }
 }

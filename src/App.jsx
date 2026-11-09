@@ -8,7 +8,7 @@ import { onReminderTap, scheduleReminders } from './reminders'
 import { autoUpdate, markAppReady } from './updater'
 import { BADGES, STR } from './data'
 import { useStore } from './store'
-import { audio, confetti, sfx } from './sfx'
+import { audio, confetti, sfx, stopSpeech } from './sfx'
 import { LangCtx, Modal, resolve } from './ui'
 import logo from './assets/logo.svg'
 
@@ -36,11 +36,13 @@ export default function App() {
   }
 
   useEffect(() => {
-    audio.muted = !settings.sound
-    audio.speak = settings.speak
+    // quick mute (child header / parent dashboard) silences sounds AND speech
+    audio.muted = !settings.sound || !!settings.mute
+    audio.speak = settings.speak && !settings.mute
+    if (settings.mute) stopSpeech()
     document.documentElement.lang = lang
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'
-  }, [settings.sound, settings.speak, lang])
+  }, [settings.sound, settings.speak, settings.mute, lang])
 
   // Updates: confirm this version started fine, then look for a newer one
   // (web updates download silently and apply on the next launch)
@@ -121,6 +123,7 @@ export default function App() {
     }
   })
 
+  const toggleMute = () => actions.setSetting('mute', !settings.mute)
   const toggleLang = () => actions.setSetting('lang', lang === 'ar' ? 'en' : 'ar')
 
   let body
@@ -134,6 +137,7 @@ export default function App() {
         actions={actions}
         toast={toast}
         onLang={toggleLang}
+        onMute={toggleMute}
         onSwitch={() => { setScreen('pick'); setChildId(null) }}
       />
     )

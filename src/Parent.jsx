@@ -324,7 +324,10 @@ export function ParentDashboard({ state, actions, onClose, toast }) {
       {codeCard}
       <div className="flex items-center justify-between">
         <h1 className="font-black text-xl">👨‍👩‍👧 {t('parentTitle')}</h1>
-        <button onClick={onClose} className="px-4 py-2 rounded-xl bg-gray-900 text-white text-sm font-bold">{t('lock')} 🔒</button>
+        <div className="flex gap-2">
+          <button onClick={() => actions.setSetting('mute', !settings.mute)} aria-label={settings.mute ? 'unmute' : 'mute'} className={`px-3 py-2 rounded-xl text-sm font-bold border ${settings.mute ? 'bg-gray-800 text-white border-gray-800' : 'bg-white border-[var(--border)]'}`}>{settings.mute ? '🔇' : '🔊'}</button>
+          <button onClick={onClose} className="px-4 py-2 rounded-xl bg-gray-900 text-white text-sm font-bold">{t('lock')} 🔒</button>
+        </div>
       </div>
 
       {/* children */}
