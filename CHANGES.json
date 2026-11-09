@@ -78,5 +78,15 @@
       "⌨️ Fix: typing did not work on some phones' keyboards (name and numbers)",
       "🔢 Water, movement, height and weight fields accept Arabic digits and can be cleared and retyped"
     ]
+  },
+  "1.4.2": {
+    "ar": [
+      "⬇️ زر «نزّل التحديث» بأعلى لوحة الأهل لما يكون في نسخة جديدة",
+      "🌐 رابط تنزيل من المتصفح إذا التثبيت من جوّا التطبيق ما زبط"
+    ],
+    "en": [
+      "⬇️ A big «Download update» button at the top of the parent area when a new version exists",
+      "🌐 A browser download link if the in-app install fails"
+    ]
   }
 }

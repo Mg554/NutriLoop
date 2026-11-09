@@ -8,7 +8,7 @@ import ReportView from './modules/report/Report'
 import RemindersCard from './RemindersCard'
 import RamadanSettings from './modules/ramadan/RamadanSettings'
 import { GRATITUDE, bedtimeFor, sleepRangeForAge } from './modules/night/data'
-import UpdatesCard from './UpdatesCard'
+import UpdatesCard, { UpdateBanner } from './UpdatesCard'
 import { hashPin, newRecoveryCode, normCode, todayStr } from './store'
 import { isNative, shareBackup } from './native'
 import { useBack } from './backStack'
@@ -385,6 +385,8 @@ export function ParentDashboard({ state, actions, onClose, toast, initialReport 
           <button onClick={onClose} className="px-4 py-2 rounded-xl bg-gray-900 text-white text-sm font-bold">{t('lock')} 🔒</button>
         </div>
       </div>
+
+      <UpdateBanner toast={toast} />
 
       {/* children */}
       <section className="space-y-2">
