@@ -25,6 +25,7 @@ const TXT = {
     iftar: ['قرّب الإفطار 🌅', { m: 'يا {n}، جهّز التمرة وكاسة المي 🌴', f: 'يا {n}، جهّزي التمرة وكاسة المي 🌴', p: 'جهّزوا التمر والمي يا أبطال 🌴' }],
     rwater: ['خطة المي 💧', { m: 'كاسة مي بعد التراويح يا {n}', f: 'كاسة مي بعد التراويح يا {n}', p: 'كاسة مي بعد التراويح يا أبطال' }],
     bedtime: ['رحلة النجوم 🌙', { m: 'يا {n}، النجوم بتستناك! يلا نجهّز للنوم ⭐', f: 'يا {n}، النجوم بتستناكِ! يلا نجهّز للنوم ⭐', p: 'يا أبطال، النجوم بتستناكم! يلا نجهّز للنوم ⭐' }],
+    report: ['📊 تقرير الأسبوع جاهز', { m: 'شوفوا كيف كان أسبوع {n} وشو نركّز عليه الأسبوع الجاي', f: 'شوفوا كيف كان أسبوع {n} وشو نركّز عليه الأسبوع الجاي', p: 'شوفوا كيف كان أسبوع الأولاد وشو نركّز عليه الأسبوع الجاي' }],
     move: ['وقت الحركة ⚡', { m: 'يلا يا {n}! ١٠ دقايق حركة وبتكبر شجرتك 🌳', f: 'يلا يا {n}! ١٠ دقايق حركة وبتكبر شجرتك 🌳', p: 'يلا يا أبطال! ١٠ دقايق حركة وبتكبر شجرتكم 🌳' }],
   },
   en: {
@@ -37,6 +38,7 @@ const TXT = {
     iftar: ['Iftar is close 🌅', { m: 'Get your date and water ready, {n} 🌴', f: 'Get your date and water ready, {n} 🌴', p: 'Get the dates and water ready, heroes 🌴' }],
     rwater: ['Water plan 💧', { m: 'A glass of water after taraweeh, {n}', f: 'A glass of water after taraweeh, {n}', p: 'A glass of water after taraweeh, heroes' }],
     bedtime: ['Star Journey 🌙', { m: 'The stars are waiting, {n}! Time to get ready for bed ⭐', f: 'The stars are waiting, {n}! Time to get ready for bed ⭐', p: 'The stars are waiting, heroes! Time for bed ⭐' }],
+    report: ['📊 Weekly report is ready', { m: "See how {n}'s week went and what to focus on next", f: "See how {n}'s week went and what to focus on next", p: "See how the kids' week went and what to focus on next" }],
     move: ['Move time ⚡', { m: 'Come on {n}! 10 minutes of moving grows your tree 🌳', f: 'Come on {n}! 10 minutes of moving grows your tree 🌳', p: '10 minutes of moving, heroes! 🌳' }],
   },
 }
@@ -114,6 +116,7 @@ export async function scheduleReminders(state) {
       }
       if (at.getTime() < now + 60000) return
       if (r.school && !cfg.schoolDays.includes(at.getDay())) return
+      if (r.weekly != null && at.getDay() !== r.weekly) return
       if (off === 0 && doneToday(r, state)) return
       const { title, body } = reminderText(r, state.children, lang)
       list.push({

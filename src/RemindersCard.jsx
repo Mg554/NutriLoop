@@ -5,8 +5,8 @@ import { REMINDERS, defaultReminders, enableNotifications, testReminder } from '
 import { Card, useT } from './ui'
 
 const NAMES = {
-  ar: { morning: '🏫 روتين الصباح', breakfast: '🍳 الفطور', water1: '💧 مي (١)', lunch: '🍽️ الغدا', water2: '💧 مي (٢)', move: '⚡ الحركة', dinner: '🍲 العشا', bedtime: '⭐ رحلة النجوم', suhoor: '🥣 السحور (رمضان)', iftar: '🌅 الإفطار (رمضان)', rwater: '💧 مي بعد التراويح (رمضان)' },
-  en: { morning: '🏫 Morning routine', breakfast: '🍳 Breakfast', water1: '💧 Water (1)', lunch: '🍽️ Lunch', water2: '💧 Water (2)', move: '⚡ Movement', dinner: '🍲 Dinner', bedtime: '⭐ Star Journey', suhoor: '🥣 Suhoor (Ramadan)', iftar: '🌅 Iftar (Ramadan)', rwater: '💧 Water after taraweeh (Ramadan)' },
+  ar: { morning: '🏫 روتين الصباح', breakfast: '🍳 الفطور', water1: '💧 مي (١)', lunch: '🍽️ الغدا', water2: '💧 مي (٢)', move: '⚡ الحركة', dinner: '🍲 العشا', bedtime: '⭐ رحلة النجوم', report: '📊 تقرير الأسبوع (الجمعة، للأهل)', suhoor: '🥣 السحور (رمضان)', iftar: '🌅 الإفطار (رمضان)', rwater: '💧 مي بعد التراويح (رمضان)' },
+  en: { morning: '🏫 Morning routine', breakfast: '🍳 Breakfast', water1: '💧 Water (1)', lunch: '🍽️ Lunch', water2: '💧 Water (2)', move: '⚡ Movement', dinner: '🍲 Dinner', bedtime: '⭐ Star Journey', report: '📊 Weekly report (Friday, parents)', suhoor: '🥣 Suhoor (Ramadan)', iftar: '🌅 Iftar (Ramadan)', rwater: '💧 Water after taraweeh (Ramadan)' },
 }
 const DAYS = { ar: ['ح', 'ن', 'ث', 'ر', 'خ', 'ج', 'س'], en: ['S', 'M', 'T', 'W', 'T', 'F', 'S'] }
 

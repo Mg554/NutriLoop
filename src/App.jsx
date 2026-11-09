@@ -19,6 +19,7 @@ export default function App() {
   const [screen, setScreen] = useState('pick') // pick | child | pin | parent
   const [childId, setChildId] = useState(null)
   const [deepTab, setDeepTab] = useState(null) // { tab, n } from a tapped reminder
+  const [reportFor, setReportFor] = useState(null) // weekly-report reminder: open it after the PIN
   const [toastMsg, setToastMsg] = useState('')
   const [modals, setModals] = useState([])
   const modal = modals[0]
@@ -70,7 +71,11 @@ export default function App() {
     () =>
       onReminderTap(({ tab, child }) => {
         const c = child && state.children.find((x) => x.id === child)
-        if (c) {
+        if (tab === 'report') {
+          setReportFor((c || state.children[0])?.id || null)
+          setChildId(null)
+          setScreen('pin')
+        } else if (c) {
           setChildId(c.id)
           setScreen('child')
           setDeepTab({ tab, n: Date.now() })
@@ -143,13 +148,13 @@ export default function App() {
       />
     )
   } else if (screen === 'pin') {
-    body = <PinGate hasPin={!!state.pin} pinHash={state.pin} onSet={actions.setPin} onOk={() => setScreen('parent')} onCancel={() => setScreen('pick')} onForgot={() => setScreen('recover')} />
+    body = <PinGate hasPin={!!state.pin} pinHash={state.pin} onSet={actions.setPin} onOk={() => setScreen('parent')} onCancel={() => { setReportFor(null); setScreen('pick') }} onForgot={() => setScreen('recover')} />
   } else if (screen === 'recover') {
     body = <RecoverGate recoveryHash={state.recovery} onOk={() => setScreen('newpin')} onCancel={() => setScreen('pin')} />
   } else if (screen === 'newpin') {
     body = <PinGate hasPin={false} onSet={actions.setPin} onOk={() => setScreen('parent')} onCancel={() => setScreen('pick')} />
   } else if (screen === 'parent') {
-    body = <ParentDashboard state={state} actions={actions} toast={toast} onClose={() => setScreen('pick')} />
+    body = <ParentDashboard state={state} actions={actions} toast={toast} initialReport={reportFor} onClose={() => { setReportFor(null); setScreen('pick') }} />
   } else {
     body = (
       <div className="h-full flex flex-col items-center justify-center gap-6 p-6 anim-pop max-w-xl mx-auto">

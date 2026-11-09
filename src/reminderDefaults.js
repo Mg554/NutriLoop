@@ -8,6 +8,8 @@ export const REMINDERS = [
   { id: 'move', tab: 'move', def: '17:30', move: true },
   { id: 'dinner', tab: 'plate', def: '19:30', meal: 3 },
   { id: 'bedtime', tab: 'night', def: '20:00', night: true },
+  // parents: weekly report, Fridays (weekday 5)
+  { id: 'report', tab: 'report', def: '18:00', weekly: 5, parent: true },
   // Ramadan: times follow fajr / maghrib (offset in minutes), only on Ramadan days
   { id: 'suhoor', tab: 'today', def: '', ramadan: 'fajr', offset: -45 },
   { id: 'iftar', tab: 'today', def: '', ramadan: 'maghrib', offset: -10 },

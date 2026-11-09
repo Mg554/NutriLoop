@@ -52,5 +52,21 @@
       "🤲 Iftar dua and daily Ramadan quests",
       "🔔 Suhoor and iftar reminders, and 🎉 an Eid surprise"
     ]
+  },
+  "1.4.0": {
+    "ar": [
+      "📊 تقرير الأسبوع للأهل: أحلى إشي، وشو نركّز عليه مع نصيحة عملية",
+      "🍽️ معدل الحصص لكل مجموعة غذائية مقابل الهدف حسب العمر",
+      "🗓️ جدول ٧ أيام: أطباق، مي، حركة، نجوم، أسنان",
+      "📈 مقارنة مع الأسبوع اللي قبل، وتصفّح الأسابيع السابقة",
+      "📤 مشاركة التقرير (واتساب مثلًا)، و🔔 تذكير أسبوعي يوم الجمعة"
+    ],
+    "en": [
+      "📊 Weekly parent report: wins, and what to focus on with a practical tip",
+      "🍽️ Average servings per food group vs the age target",
+      "🗓️ 7-day grid: plates, water, movement, stars, teeth",
+      "📈 Comparison with last week, and browse earlier weeks",
+      "📤 Share the report, and 🔔 a weekly Friday reminder"
+    ]
   }
 }

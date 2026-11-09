@@ -311,8 +311,9 @@ export function useStore() {
         p.platesSaved += 1
         if (a.balanced) p.balancedPlates += 1
         if (a.complete) p.completePlates += 1
+        p.foodFirst ||= {} // food id -> date first put on a plate (weekly report)
         Object.values(items).flat().forEach((it) => {
-          if (!p.foodsTried.includes(it.id)) p.foodsTried.push(it.id)
+          if (!p.foodsTried.includes(it.id)) { p.foodsTried.push(it.id); p.foodFirst[it.id] = date }
         })
         const h = p.history[date]
         h.plates += 1
@@ -427,7 +428,7 @@ export function useStore() {
         const n = p.day.night
         if (n.steps[stepId] || n.done) return
         n.steps[stepId] = true
-        if (stepId === 'brush') p.brushCount += 1
+        if (stepId === 'brush') { p.brushCount += 1; p.history[date].brush = true }
         if (stepId === 'thanks' && Array.isArray(extra)) n.thanks = extra.slice(0, 3)
         addXp(p, 5, ev)
         markActive(p, date, ev)

@@ -19,14 +19,18 @@ const check = (name, cond, info = '') => { ok.push(cond); console.log(cond ? '�
 const todays = () => scheduled.filter((n) => new Date(n.schedule.at).toDateString() === six.toDateString()).map((n) => n.id - 7000)
 
 await scheduleReminders(base())
-const N = REMINDERS.filter((r) => !r.ramadan).length  // Ramadan ones only fire in Ramadan
-check(`${N} reminders x 3 days`, scheduled.length === N * 3, scheduled.length)
+const N = REMINDERS.filter((r) => !r.ramadan && r.weekly == null).length  // Ramadan ones only fire in Ramadan
+const fri = (off) => { const x = new Date(six); x.setDate(x.getDate() + off); return x.getDay() === 5 }
+const FR = [0, 1, 2].filter(fri).length // weekly report: Fridays only
+const RI = REMINDERS.findIndex((r) => r.id === 'report')
+check(`${N} reminders x 3 days (+${FR} weekly report)`, scheduled.length === N * 3 + FR, scheduled.length)
+check('weekly report only on Fridays', scheduled.filter((n) => (n.id - 7000) % 50 === RI).every((n) => new Date(n.schedule.at).getDay() === 5 && new Date(n.schedule.at).getHours() === 18))
 check('girl wording', scheduled[1].body.includes('اعملي') && scheduled[1].body.includes('تولين'), scheduled[1].body)
 
 const s2 = base(); s2.progress.a.history[d].plates = 2; s2.progress.a.day.waterHit = true
 await scheduleReminders(s2)
-check('breakfast+lunch+both waters skipped today (plates 2, water done)', JSON.stringify(todays()) === JSON.stringify([0, 5, 6, 7]), todays())
-check('old reminders replaced, not duplicated', scheduled.length === N * 3 - 4, scheduled.length)
+check('breakfast+lunch+both waters skipped today (plates 2, water done)', JSON.stringify(todays()) === JSON.stringify([0, 5, 6, 7, ...(fri(0) ? [RI] : [])]), todays())
+check('old reminders replaced, not duplicated', scheduled.length === N * 3 + FR - 4, scheduled.length)
 
 const s3 = base(); s3.settings.reminders.schoolDays = []
 await scheduleReminders(s3)
@@ -53,7 +57,7 @@ check('bedtime reminder skipped once tonight is done', !todays().includes(7), to
 const s8 = base(); s8.settings.ramadan = { ...defaultRamadan(), mode: 'on' }
 await scheduleReminders(s8)
 const ids = (off) => scheduled.filter((n) => Math.floor((n.id - 7000) / 50) === off).map((n) => REMINDERS[(n.id - 7000) % 50].id).sort()
-check('Ramadan tomorrow: only morning, bedtime, suhoor, iftar, rwater', JSON.stringify(ids(1)) === JSON.stringify(['bedtime', 'iftar', 'morning', 'rwater', 'suhoor']), ids(1).join(','))
+check('Ramadan tomorrow: only morning, bedtime, suhoor, iftar, rwater', JSON.stringify(ids(1).filter((x) => x !== 'report')) === JSON.stringify(['bedtime', 'iftar', 'morning', 'rwater', 'suhoor']), ids(1).join(','))
 const tmr = new Date(); tmr.setDate(tmr.getDate() + 1); tmr.setHours(12, 0, 0, 0)
 const ft = fastTimes(s8.settings.ramadan, tmr)
 const suh = scheduled.find((n) => n.id === 7000 + 50 + REMINDERS.findIndex((r) => r.id === 'suhoor'))
