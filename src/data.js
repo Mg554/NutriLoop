@@ -4,6 +4,7 @@
 // ---------------------------------------------------------------------------
 
 import { MOVE_STR } from './modules/move/data'
+import { NIGHT_STR } from './modules/night/data'
 
 // Plate sections (MyPlate): veg+fruit = half, grain = ¼, protein = ¼, dairy = cup on the side.
 export const SECTIONS = ['veg', 'grain', 'protein', 'dairy']
@@ -139,6 +140,9 @@ export const BADGES = [
   { id: 'school', emoji: '🏫', title: { ar: 'جاهز للمدرسة', en: 'School Ready' }, desc: { ar: 'روتين الصباح ٥ مرات', en: 'Morning routine 5 times' }, check: (s) => (s.routines?.morning || 0) >= 5 },
   { id: 'coach', emoji: '🤖', title: { ar: 'صاحب المدرب', en: 'Coach Buddy' }, desc: { ar: 'خلّصت تحدي بالكاميرا ٣ مرات', en: 'Finished 3 camera challenges' }, check: (s) => (s.routines?.cam || 0) >= 3 },
   { id: 'manners', emoji: '🤲', title: { ar: 'آداب الطعام', en: 'Table Manners' }, desc: { ar: 'كل آداب الأكل ٣ أيام', en: 'All manners on 3 days' }, check: (s) => s.mannersDays >= 3 },
+  { id: 'night3', emoji: '🌙', title: { ar: 'ليالي النجوم', en: 'Star Nights' }, desc: { ar: '٣ ليالي رحلة نجوم كاملة', en: '3 full Star Journeys' }, check: (s) => s.nightsDone >= 3 },
+  { id: 'night10', emoji: '🌌', title: { ar: 'سيّد الكواكب', en: 'Constellation Keeper' }, desc: { ar: '١٠ ليالي نجوم', en: '10 Star nights' }, check: (s) => s.nightsDone >= 10 },
+  { id: 'teeth', emoji: '🦷', title: { ar: 'أسنان لامعة', en: 'Shiny Teeth' }, desc: { ar: 'فرّشت أسنانك ١٤ مرة', en: 'Brushed 14 times' }, check: (s) => s.brushCount >= 14 },
   { id: 'streak7', emoji: '👑', title: { ar: 'أسبوع كامل', en: 'Full Week' }, desc: { ar: '٧ أيام ورا بعض', en: '7 days in a row' }, check: (s) => s.bestStreak >= 7 },
 ]
 
@@ -301,6 +305,6 @@ export const STR = {
   },
 }
 
-for (const l of ['ar', 'en']) for (const k of Object.keys(MOVE_STR[l])) if (k in STR[l]) console.warn('string key clash', k)
-Object.assign(STR.ar, MOVE_STR.ar)
-Object.assign(STR.en, MOVE_STR.en)
+for (const l of ['ar', 'en']) for (const k of [...Object.keys(MOVE_STR[l]), ...Object.keys(NIGHT_STR[l])]) if (k in STR[l]) console.warn('string key clash', k)
+Object.assign(STR.ar, MOVE_STR.ar, NIGHT_STR.ar)
+Object.assign(STR.en, MOVE_STR.en, NIGHT_STR.en)

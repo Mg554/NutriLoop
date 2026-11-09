@@ -7,6 +7,7 @@ export const REMINDERS = [
   { id: 'water2', tab: 'today', def: '16:00', water: true },
   { id: 'move', tab: 'move', def: '17:30', move: true },
   { id: 'dinner', tab: 'plate', def: '19:30', meal: 3 },
+  { id: 'bedtime', tab: 'night', def: '20:00', night: true },
 ]
 export const defaultReminders = () => ({
   on: false,

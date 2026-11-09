@@ -20,6 +20,7 @@ const TXT = {
     lunch: ['وقت الغدا 🍽️', { m: 'يا {n}، شو في بطبقك اليوم؟ لا تنسى الخضار 🥦', f: 'يا {n}، شو في بطبقك اليوم؟ لا تنسي الخضار 🥦', p: 'شو في بأطباقكم اليوم؟ لا تنسوا الخضار 🥦' }],
     dinner: ['وقت العشا 🌙', { m: 'يا {n}، طبق العشا بستناك! شو رأيك بحصة ألبان؟ 🥛', f: 'يا {n}، طبق العشا بستناكِ! شو رأيك بحصة ألبان؟ 🥛', p: 'أطباق العشا بتستناكم! حصة ألبان؟ 🥛' }],
     water: ['كاسة مي 💧', { m: 'اشرب كاسة مي يا {n}، شاحن المي بستناك', f: 'اشربي كاسة مي يا {n}، شاحن المي بستناكِ', p: 'اشربوا كاسة مي يا أبطال 💧' }],
+    bedtime: ['رحلة النجوم 🌙', { m: 'يا {n}، النجوم بتستناك! يلا نجهّز للنوم ⭐', f: 'يا {n}، النجوم بتستناكِ! يلا نجهّز للنوم ⭐', p: 'يا أبطال، النجوم بتستناكم! يلا نجهّز للنوم ⭐' }],
     move: ['وقت الحركة ⚡', { m: 'يلا يا {n}! ١٠ دقايق حركة وبتكبر شجرتك 🌳', f: 'يلا يا {n}! ١٠ دقايق حركة وبتكبر شجرتك 🌳', p: 'يلا يا أبطال! ١٠ دقايق حركة وبتكبر شجرتكم 🌳' }],
   },
   en: {
@@ -28,6 +29,7 @@ const TXT = {
     lunch: ['Lunch time 🍽️', { m: "What's on your plate, {n}? Don't forget veggies 🥦", f: "What's on your plate, {n}? Don't forget veggies 🥦", p: "What's on your plates? Don't forget veggies 🥦" }],
     dinner: ['Dinner time 🌙', { m: 'Your dinner plate is waiting, {n}! A dairy serving? 🥛', f: 'Your dinner plate is waiting, {n}! A dairy serving? 🥛', p: 'Dinner plates are waiting! A dairy serving? 🥛' }],
     water: ['Water time 💧', { m: 'Drink a glass of water, {n}', f: 'Drink a glass of water, {n}', p: 'Drink a glass of water, heroes 💧' }],
+    bedtime: ['Star Journey 🌙', { m: 'The stars are waiting, {n}! Time to get ready for bed ⭐', f: 'The stars are waiting, {n}! Time to get ready for bed ⭐', p: 'The stars are waiting, heroes! Time for bed ⭐' }],
     move: ['Move time ⚡', { m: 'Come on {n}! 10 minutes of moving grows your tree 🌳', f: 'Come on {n}! 10 minutes of moving grows your tree 🌳', p: '10 minutes of moving, heroes! 🌳' }],
   },
 }
@@ -50,6 +52,7 @@ function doneToday(r, state) {
     if (r.water) return !!day?.waterHit
     if (r.move) return !!day?.moveHit
     if (r.school) return (h?.move || 0) > 0
+    if (r.night) return !!day?.night?.done
     return false
   })
 }
@@ -83,7 +86,7 @@ export async function scheduleReminders(state) {
   const list = []
   for (let off = 0; off < DAYS_AHEAD; off++) {
     REMINDERS.forEach((r, i) => {
-      const it = cfg.items[r.id]
+      const it = cfg.items[r.id] || { on: true, t: r.def } // reminders added in later versions default to on
       if (!it?.on) return
       const [hh, mm] = it.t.split(':').map(Number)
       const at = new Date()

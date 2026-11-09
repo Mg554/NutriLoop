@@ -5,8 +5,8 @@ import { REMINDERS, defaultReminders, enableNotifications, testReminder } from '
 import { Card, useT } from './ui'
 
 const NAMES = {
-  ar: { morning: '🏫 روتين الصباح', breakfast: '🍳 الفطور', water1: '💧 مي (١)', lunch: '🍽️ الغدا', water2: '💧 مي (٢)', move: '⚡ الحركة', dinner: '🌙 العشا' },
-  en: { morning: '🏫 Morning routine', breakfast: '🍳 Breakfast', water1: '💧 Water (1)', lunch: '🍽️ Lunch', water2: '💧 Water (2)', move: '⚡ Movement', dinner: '🌙 Dinner' },
+  ar: { morning: '🏫 روتين الصباح', breakfast: '🍳 الفطور', water1: '💧 مي (١)', lunch: '🍽️ الغدا', water2: '💧 مي (٢)', move: '⚡ الحركة', dinner: '🍲 العشا', bedtime: '⭐ رحلة النجوم' },
+  en: { morning: '🏫 Morning routine', breakfast: '🍳 Breakfast', water1: '💧 Water (1)', lunch: '🍽️ Lunch', water2: '💧 Water (2)', move: '⚡ Movement', dinner: '🍲 Dinner', bedtime: '⭐ Star Journey' },
 }
 const DAYS = { ar: ['ح', 'ن', 'ث', 'ر', 'خ', 'ج', 'س'], en: ['S', 'M', 'T', 'W', 'T', 'F', 'S'] }
 

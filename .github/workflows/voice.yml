@@ -23,6 +23,7 @@ on:
       - src/data.js
       - src/modules/move/data.js
       - src/speechText.js
+      - src/modules/night/data.js
       - scripts/speech-lines.src.js
       - scripts/synth.py
 
@@ -35,7 +36,9 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+  # ElevenLabs only after a voice is approved (repo variable VOICE_PROVIDER=elevenlabs);
+  # samples runs may always use it. Otherwise: Piper.
+  ELEVENLABS_API_KEY: ${{ (vars.VOICE_PROVIDER == 'elevenlabs' || inputs.mode == 'samples') && secrets.ELEVENLABS_API_KEY || '' }}
   ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}
   MODE: ${{ inputs.mode || 'full' }}
 

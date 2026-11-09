@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { BADGES, FOODS, MANNERS, QUEST_POOL, RANKS, RANKS_F, waterGoalForAge } from './data'
 import MoveTab from './modules/move/Move'
 import PortionsCard from './modules/growth/PortionsCard'
+import { NightCard, NightJourney } from './modules/night/Night'
 import { portionOf } from './modules/growth/portions'
 import { analysePlate, getFood, levelInfo, liveStreak, sectionOf } from './store'
 import { say, sfx } from './sfx'
@@ -18,7 +19,12 @@ const STAGE_EMOJI = ['🫘', '🌱', '🌿', '🌸', '🌳']
 export default function ChildApp({ child, progress, settings, actions, onSwitch, onLang, onMute, toast, deepTab }) {
   const { t, lang, gender } = useT()
   const [tab, setTab] = useState(deepTab?.tab || 'today')
-  useEffect(() => { if (deepTab?.tab) setTab(deepTab.tab) }, [deepTab])
+  const [nightOpen, setNightOpen] = useState(false)
+  useEffect(() => {
+    if (!deepTab?.tab) return
+    if (deepTab.tab === 'night') { setTab('today'); setNightOpen(true) } else setTab(deepTab.tab)
+  }, [deepTab])
+  const schoolDays = settings.reminders?.schoolDays
   useBack(onSwitch, 0)
   useBack(() => setTab(tab === 'diary' ? 'plate' : 'today'), 1, tab !== 'today')
   const lvl = levelInfo(progress.xp)
@@ -58,7 +64,8 @@ export default function ChildApp({ child, progress, settings, actions, onSwitch,
       </header>
 
       <main className="flex-1 overflow-y-auto no-scrollbar p-4 pb-28">
-        {tab === 'today' && <Today {...{ child, progress, settings, actions }} />}
+        {tab === 'today' && <Today {...{ child, progress, settings, actions }} onNight={() => setNightOpen(true)} />}
+        {nightOpen && <NightJourney child={child} progress={progress} schoolDays={schoolDays} actions={actions} onClose={() => setNightOpen(false)} />}
         {tab === 'plate' && <PlateBuilder {...{ child, progress, actions, toast }} onDiary={() => setTab('diary')} />}
         {tab === 'move' && <MoveTab {...{ child, progress, actions, settings }} />}
         {tab === 'game' && <SortGame {...{ child, progress, actions }} />}
@@ -83,16 +90,21 @@ export default function ChildApp({ child, progress, settings, actions, onSwitch,
 }
 
 // ---------------------------------------------------------------------------
-function Today({ child, progress, settings, actions }) {
+function Today({ child, progress, settings, actions, onNight }) {
   const { t, pick, lang } = useT()
   const day = progress.day
   if (!day) return null
+  // evenings (from 5 pm) the bedtime journey moves to the top of the day
+  const hour = new Date().getHours()
+  const evening = hour >= 17 || hour < 4
+  const night = <NightCard child={child} progress={progress} schoolDays={settings.reminders?.schoolDays} onOpen={onNight} />
   const goal = child.waterGoal || waterGoalForAge(child.age)
   const pct = Math.min(100, Math.round((day.water / goal) * 100))
   const done = day.quests.filter((q) => q.done).length
 
   return (
     <div className="space-y-4 anim-pop">
+      {evening && night}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="font-black text-xl">{t('todaysQuests')}</h2>
@@ -148,6 +160,7 @@ function Today({ child, progress, settings, actions }) {
 
       <PortionsCard child={child} progress={progress} />
       <Manners {...{ child, progress, actions }} />
+      {!evening && night}
       <MealTimer />
       {settings.approval && <p className="text-[11px] text-center text-[var(--text-soft)]">🔒 {t('approval')}</p>}
     </div>

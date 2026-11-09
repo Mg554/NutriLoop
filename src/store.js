@@ -58,6 +58,7 @@ const newProgress = () => ({
   plates: [], foodsTried: [],
   platesSaved: 0, balancedPlates: 0, completePlates: 0, waterGoalDays: 0,
   routines: {}, routinesDone: 0, moveGoalDays: 0, mannersDays: 0,
+  nightsDone: 0, brushCount: 0, nightLog: [], // bedtime routine
   history: {}, // date -> { plates, quests, water, missing: {veg,grain,protein,dairy} }
   day: null, // { date, quests, water, platesXp, gameRuns, waterHit }
 })
@@ -373,6 +374,32 @@ export function useStore() {
           markActive(p, date, ev)
           ev.push({ type: 'questDone' })
         }
+      }),
+
+    // ---- bedtime "Star Journey" --------------------------------------------
+    nightStep: (childId, stepId, extra) =>
+      withChild(childId, (p, ev, { date }) => {
+        p.day.night ||= { steps: {}, thanks: [] }
+        const n = p.day.night
+        if (n.steps[stepId] || n.done) return
+        n.steps[stepId] = true
+        if (stepId === 'brush') p.brushCount += 1
+        if (stepId === 'thanks' && Array.isArray(extra)) n.thanks = extra.slice(0, 3)
+        addXp(p, 5, ev)
+        markActive(p, date, ev)
+      }),
+
+    nightFinish: (childId) =>
+      withChild(childId, (p, ev, { date }) => {
+        const n = p.day.night
+        if (!n || n.done) return
+        n.done = true
+        n.doneAt = Date.now()
+        p.nightsDone += 1
+        p.nightLog = [{ date, thanks: n.thanks || [], at: n.doneAt }, ...p.nightLog.filter((x) => x.date !== date)].slice(0, 30)
+        addXp(p, 30, ev)
+        growPlant(p, 15, ev)
+        markActive(p, date, ev)
       }),
 
     finishGame: (childId, score) =>

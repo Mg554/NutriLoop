@@ -2,6 +2,8 @@
 @import '@fontsource/cairo/400.css';
 @import '@fontsource/cairo/700.css';
 @import '@fontsource/cairo/900.css';
+@import '@fontsource/amiri/arabic-400.css';
+@import '@fontsource/amiri/arabic-700.css';
 
 :root {
   --bg: #fff4e0;
@@ -73,3 +75,15 @@ button { cursor: pointer; touch-action: manipulation; }
 .ex-squat { animation: exSquat 1.4s infinite ease-in-out; display: inline-block }
 .ex-hold { animation: exHold 2s infinite ease-in-out; display: inline-block }
 .ex-stomp { animation: exStomp .9s infinite; display: inline-block }
+
+/* ---- bedtime "Star Journey" ---- */
+@keyframes nightTwinkle { 0%, 100% { opacity: .25 } 50% { opacity: 1 } }
+@keyframes nightPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(252, 211, 77, 0) } 50% { box-shadow: 0 0 14px 2px rgba(252, 211, 77, .35) } }
+@keyframes nightFloat { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-6px) } }
+@keyframes nightBrush { 0%, 100% { transform: translate(-50%, -50%) rotate(-12deg) } 50% { transform: translate(-30%, -50%) rotate(12deg) } }
+.night-twinkle { animation: nightTwinkle 3s infinite ease-in-out; }
+.night-pulse { animation: nightPulse 2.4s infinite ease-in-out; }
+.night-float { animation: nightFloat 5s infinite ease-in-out; }
+.night-brush { animation: nightBrush .35s infinite ease-in-out; transform: translate(-50%, -50%); }
+@keyframes nightSheet { from { transform: translateY(40px) } to { transform: translateY(0) } }
+.night-sheet { animation: nightSheet .3s cubic-bezier(.2, .9, .3, 1); }

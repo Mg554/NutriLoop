@@ -5,6 +5,7 @@ import { moveGoalForAge } from './modules/move/data'
 import Kid, { PALETTES, kidProps } from './modules/move/Kid'
 import GrowthView from './modules/growth/Growth'
 import RemindersCard from './RemindersCard'
+import { GRATITUDE, bedtimeFor, sleepRangeForAge } from './modules/night/data'
 import UpdatesCard from './UpdatesCard'
 import { hashPin, newRecoveryCode, normCode, todayStr } from './store'
 import { isNative, shareBackup } from './native'
@@ -179,6 +180,21 @@ function ChildForm({ initial, onSave, onCancel, onDelete }) {
         <span className="text-xs font-bold text-[var(--text-soft)]">{t('moveGoal')}</span>
         <input type="number" step={5} min={10} max={180} value={c.moveGoal || moveGoalForAge(c.age)} onChange={(e) => set('moveGoal', +e.target.value || null)} className="mt-1 w-full px-4 py-2.5 rounded-xl border border-[var(--border)]" dir="ltr" />
       </label>
+      {/* sleep: bedtime is suggested from wake-up time and the age-based sleep need */}
+      <div className="grid grid-cols-2 gap-2">
+        <label className="block">
+          <span className="text-xs font-bold text-[var(--text-soft)]">🌅 {t('wake')}</span>
+          <input id="c-wake" type="time" value={c.wake || '06:30'} onChange={(e) => set('wake', e.target.value || null)} className="mt-1 w-full px-3 py-2.5 rounded-xl border border-[var(--border)]" dir="ltr" />
+        </label>
+        <label className="block">
+          <span className="text-xs font-bold text-[var(--text-soft)]">🌙 {t('bedtime')}</span>
+          <input id="c-bed" type="time" value={bedtimeFor(c)} onChange={(e) => set('bedtime', e.target.value || null)} className="mt-1 w-full px-3 py-2.5 rounded-xl border border-[var(--border)]" dir="ltr" />
+        </label>
+      </div>
+      <p className="text-[11px] text-[var(--text-soft)] -mt-2">
+        😴 {sleepRangeForAge(c.age).join('–')} {t('sleepNeed')} (AASM) · {t('bedSuggest')}: <bdi dir="ltr">{bedtimeFor({ ...c, bedtime: null })}</bdi>
+        {c.bedtime && <button onClick={() => set('bedtime', null)} className="ms-2 underline">↺</button>}
+      </p>
       <div className="flex gap-2">
         <button disabled={!c.name.trim()} onClick={() => onSave({ ...c, name: c.name.trim() })} className="flex-1 py-3 rounded-xl bg-[var(--primary)] text-white font-black disabled:opacity-40">{t('save')}</button>
         <button onClick={onCancel} className="px-4 py-3 rounded-xl border border-[var(--border)] font-bold">{t('cancel')}</button>
@@ -234,6 +250,17 @@ function WeekSummary({ child, progress, onGrowth }) {
           </div>
         ))}
       </div>
+      {(() => {
+        // bedtime journey: nights completed this week + best moments
+        const log = (progress?.nightLog || []).filter((x) => days.includes(x.date))
+        const moments = [...new Set(log.flatMap((x) => x.thanks))].map((id) => GRATITUDE.find((g) => g.id === id)).filter(Boolean)
+        return (
+          <div className="flex items-center gap-2 text-xs flex-wrap">
+            <span className="font-bold">🌙 {t('nights')}: {log.length}/7</span>
+            {moments.length > 0 && <span className="text-[var(--text-soft)]">· 💛 {moments.map((g) => g.emoji + ' ' + g[lang]).join(' · ')}</span>}
+          </div>
+        )
+      })()}
       {missing.length > 0 && (
         <div className="text-xs">
           <span className="font-bold">{t('sectionsMissing')}: </span>

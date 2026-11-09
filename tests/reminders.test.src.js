@@ -1,4 +1,4 @@
-import { scheduleReminders, defaultReminders } from '../src/reminders'
+import { scheduleReminders, defaultReminders, REMINDERS } from '../src/reminders'
 import { scheduled } from './mocks/local-notifications'
 import { todayStr } from '../src/store'
 
@@ -18,13 +18,14 @@ const check = (name, cond, info = '') => { ok.push(cond); console.log(cond ? '�
 const todays = () => scheduled.filter((n) => new Date(n.schedule.at).toDateString() === six.toDateString()).map((n) => n.id - 7000)
 
 await scheduleReminders(base())
-check('7 reminders x 3 days', scheduled.length === 21, scheduled.length)
+const N = REMINDERS.length
+check(`${N} reminders x 3 days`, scheduled.length === N * 3, scheduled.length)
 check('girl wording', scheduled[1].body.includes('اعملي') && scheduled[1].body.includes('تولين'), scheduled[1].body)
 
 const s2 = base(); s2.progress.a.history[d].plates = 2; s2.progress.a.day.waterHit = true
 await scheduleReminders(s2)
-check('breakfast+lunch+both waters skipped today (plates 2, water done)', JSON.stringify(todays()) === JSON.stringify([0, 5, 6]), todays())
-check('old reminders replaced, not duplicated', scheduled.length === 21 - 4, scheduled.length)
+check('breakfast+lunch+both waters skipped today (plates 2, water done)', JSON.stringify(todays()) === JSON.stringify([0, 5, 6, 7]), todays())
+check('old reminders replaced, not duplicated', scheduled.length === N * 3 - 4, scheduled.length)
 
 const s3 = base(); s3.settings.reminders.schoolDays = []
 await scheduleReminders(s3)
@@ -40,4 +41,11 @@ const s5 = base(); s5.settings.reminders.on = false
 await scheduleReminders(s5)
 check('turning reminders off cancels everything', scheduled.length === 0)
 Date.now = real
+// a saved config from an older version (no 'bedtime' item) still gets the new reminder
+const s6 = base(); delete s6.settings.reminders.items.bedtime
+await scheduleReminders(s6)
+check('new reminder types default to on for old saved settings', scheduled.some((n) => (n.id - 7000) % 50 === 7))
+const s7 = base(); s7.progress.a.day.night = { done: true }
+await scheduleReminders(s7)
+check('bedtime reminder skipped once tonight is done', !todays().includes(7), todays())
 const pass = ok.every(Boolean); console.log(pass ? 'PASS' : 'FAIL'); process.exit(pass ? 0 : 1)
