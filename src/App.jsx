@@ -111,7 +111,7 @@ export default function App() {
         case 'waterGoal': confetti(); toast((e.move ? '⚡' : '💧') + '🎉 +30 XP'); break
         case 'undo': sfx.whoosh(); break
         case 'plateSaved': sfx.fanfare(); confetti(); toast(tr('saved') + (e.xp ? ` +${e.xp} XP` : '')); break
-        case 'gameOver': if (e.xp) { sfx.fanfare(); confetti() } break
+        case 'gameOver': break // the game arena shows its own result screen
         case 'eid': setTimeout(() => { sfx.fanfare(); confetti(); setTimeout(confetti, 700); setModal({ emoji: '🎉🌙', title: tr('eid'), body: resolve(STR[lang].eidSub, gender, { name: child?.name || '' }), sub: '+50 XP' }) }, 800); break
         case 'toast': if (e.key === 'streakUp') toast(`🔥 ${e.n} ${tr('streak')}`); break
       }
@@ -137,6 +137,7 @@ export default function App() {
     body = (
       <ChildApp
         deepTab={deepTab}
+        siblings={children.filter((c) => c.id !== child.id)}
         child={child}
         progress={state.progress[child.id] || {}}
         settings={settings}

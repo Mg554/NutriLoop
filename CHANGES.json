@@ -88,5 +88,25 @@
       "⬇️ A big «Download update» button at the top of the parent area when a new version exists",
       "🌐 A browser download link if the in-app install fails"
     ]
+  },
+  "1.5.0": {
+    "ar": [
+      "🎮 ساحة التحديات: ٤ ألعاب + تحدي الإخوة",
+      "⚡ تحدي السرعة صار فيه قلوب ومستويات وقدرات خاصة (❄️ تجميد، ✖️2، ❤️)",
+      "🧺 التقط الأكل، 🍽️ سباق الطبق، ✅❌ صح ولا غلط",
+      "📚 بنك المعلومات: ٤٥ معلومة صحية بتنفتح وانت بتلعب",
+      "🏆 أحسن نتيجة وكؤوس برونز وفضة وذهب",
+      "🪥 فرشاة أسنان واقعية على مستوى الأسنان",
+      "🤲 «الله يحفظك ويحرسك لبكرة» بنهاية رحلة النجوم"
+    ],
+    "en": [
+      "🎮 Game Arena: 4 games + Sibling Duel",
+      "⚡ Speed Sort now has hearts, levels and power-ups (❄️ freeze, ✖️2, ❤️)",
+      "🧺 Food Catch, 🍽️ Plate Race, ✅❌ True or False",
+      "📚 Fact Bank: 45 health facts that unlock as you play",
+      "🏆 Best scores and bronze, silver and gold cups",
+      "🪥 A realistic toothbrush at teeth level",
+      "🤲 \"May Allah protect you\" at the end of the Star Journey"
+    ]
   }
 }

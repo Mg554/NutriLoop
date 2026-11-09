@@ -5,6 +5,7 @@ import MoveTab from './modules/move/Move'
 import PortionsCard from './modules/growth/PortionsCard'
 import { NightCard, NightJourney } from './modules/night/Night'
 import RamadanCard, { RamadanSoon } from './modules/ramadan/Ramadan'
+import Arcade from './modules/arcade/Arcade'
 import { portionOf } from './modules/growth/portions'
 import { analysePlate, getFood, levelInfo, liveStreak, sectionOf } from './store'
 import { say, sfx } from './sfx'
@@ -17,7 +18,7 @@ const stageOf = (plant) => Math.min(4, Math.floor(plant / 25))
 const STAGE_EMOJI = ['🫘', '🌱', '🌿', '🌸', '🌳']
 
 // ---------------------------------------------------------------------------
-export default function ChildApp({ child, progress, settings, actions, onSwitch, onLang, onMute, toast, deepTab }) {
+export default function ChildApp({ child, progress, settings, actions, onSwitch, onLang, onMute, toast, deepTab, siblings = [] }) {
   const { t, lang, gender } = useT()
   const [tab, setTab] = useState(deepTab?.tab || 'today')
   const [nightOpen, setNightOpen] = useState(false)
@@ -71,7 +72,7 @@ export default function ChildApp({ child, progress, settings, actions, onSwitch,
         {nightOpen && <NightJourney child={child} progress={progress} schoolDays={schoolDays} actions={actions} onClose={() => setNightOpen(false)} />}
         {tab === 'plate' && <PlateBuilder {...{ child, progress, actions, toast }} onDiary={() => setTab('diary')} />}
         {tab === 'move' && <MoveTab {...{ child, progress, actions, settings }} />}
-        {tab === 'game' && <SortGame {...{ child, progress, actions }} />}
+        {tab === 'game' && <Arcade {...{ child, progress, actions, siblings }} />}
         {tab === 'diary' && <Diary progress={progress} onBack={() => setTab('plate')} />}
         {tab === 'rewards' && <Rewards progress={progress} />}
       </main>
@@ -403,113 +404,6 @@ function PlateBuilder({ child, progress, actions, toast, onDiary }) {
           ))}
         </div>
         <p className="text-[11px] text-center text-[var(--text-soft)]">💡 {lang === 'ar' ? 'اكبس عالأكل، أو اضغط مطوّل واسحبه عالطبق' : 'Tap a food, or press & hold to drag it'}</p>
-      </div>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Sort game: a food appears, the child picks the plate section it belongs to.
-const GAME_SECS = [
-  ['veg', '🥦🍎', 'vegFruits'],
-  ['grain', '🍞', 'grains'],
-  ['protein', '🍗', 'protein'],
-  ['dairy', '🥛', 'dairy'],
-]
-function SortGame({ child, progress, actions }) {
-  const { t, lang } = useT()
-  const [phase, setPhase] = useState('idle') // idle | play | over
-  const [food, setFood] = useState(null)
-  const [score, setScore] = useState(0)
-  const [combo, setCombo] = useState(0)
-  const [left, setLeft] = useState(30)
-  const [flash, setFlash] = useState(null)
-  const [earned, setEarned] = useState(0)
-  const scoreRef = useRef(0)
-
-  const next = (prev) => {
-    let f
-    do f = FOODS[Math.floor(Math.random() * FOODS.length)]
-    while (prev && f.id === prev.id)
-    setFood(f)
-    say(f.name[lang], lang)
-  }
-  const start = () => {
-    sfx.sparkle()
-    setScore(0); scoreRef.current = 0; setCombo(0); setLeft(30); setPhase('play'); next()
-  }
-  useEffect(() => {
-    if (phase !== 'play') return
-    const end = Date.now() + 30000
-    const id = setInterval(() => {
-      const l = Math.max(0, Math.ceil((end - Date.now()) / 1000))
-      setLeft(l)
-      if (l === 0) {
-        clearInterval(id)
-        setPhase('over')
-        const runs = progress.day?.gameRuns ?? 0
-        setEarned(runs < 3 && scoreRef.current > 0 ? Math.min(60, Math.round(scoreRef.current / 2)) : 0)
-        actions.finishGame(child.id, scoreRef.current)
-      }
-    }, 250)
-    return () => clearInterval(id)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase])
-
-  const answer = (sec) => {
-    if (phase !== 'play' || !food) return
-    if (sectionOf(food) === sec) {
-      const gain = 10 + Math.min(combo, 5) * 2
-      scoreRef.current += gain
-      setScore(scoreRef.current); setCombo((c) => c + 1); setFlash('ok'); sfx.pop(); next(food)
-    } else {
-      setCombo(0); setFlash('bad'); sfx.wrong()
-    }
-    setTimeout(() => setFlash(null), 300)
-  }
-
-  if (phase !== 'play')
-    return (
-      <div className="flex flex-col items-center text-center gap-3 pt-10 anim-pop">
-        <div className="text-7xl anim-bounce">⚡</div>
-        <h2 className="font-black text-2xl">{t('gameTitle')}</h2>
-        <p className="text-sm text-[var(--text-soft)] px-6">{t('gameSort')}</p>
-        {phase === 'over' && (
-          <div className="text-xl font-black text-[var(--primary)]">
-            {t('gameOver')} {score} 🎉 {earned > 0 && <span className="block text-sm">+{earned} XP</span>}
-          </div>
-        )}
-        <button onClick={start} className="mt-4 px-10 py-3.5 rounded-full bg-[var(--primary)] text-white font-black text-lg shadow-lg active:scale-95">
-          {phase === 'over' ? t('replay') : t('start')}
-        </button>
-        <p className="text-[11px] text-[var(--text-soft)]">{t('gameDaily')}</p>
-      </div>
-    )
-
-  return (
-    <div className="space-y-5 anim-pop">
-      <div className="flex justify-between">
-        <span className="font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-full text-sm">⏱️ {left}s</span>
-        {combo > 1 && <span className="font-black text-purple-600 bg-purple-50 px-3 py-1 rounded-full text-sm">🔥 ×{combo}</span>}
-        <span className="font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-full text-sm">{t('score')} {score}</span>
-      </div>
-      {food && (
-        <Card className={`flex flex-col items-center py-8 ${flash === 'bad' ? 'anim-shake border-red-300' : flash === 'ok' ? 'border-green-300' : ''}`}>
-          <div key={food.id} className="text-8xl anim-pop">{food.emoji}</div>
-          <div className="text-xl font-black mt-2">{food.name[lang]}</div>
-        </Card>
-      )}
-      <div className="grid grid-cols-2 gap-3">
-        {GAME_SECS.map(([sec, emo, key]) => (
-          <button
-            key={sec}
-            onClick={() => answer(sec)}
-            className={`py-5 rounded-3xl font-black text-sm shadow-md active:scale-95 border-2 ${{ veg: 'bg-green-100 border-green-300', grain: 'bg-amber-100 border-amber-300', protein: 'bg-orange-100 border-orange-300', dairy: 'bg-blue-100 border-blue-300' }[sec]}`}
-          >
-            <div className="text-3xl">{emo}</div>
-            {t(key)}
-          </button>
-        ))}
       </div>
     </div>
   )

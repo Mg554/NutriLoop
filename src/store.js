@@ -61,6 +61,7 @@ const newProgress = () => ({
   routines: {}, routinesDone: 0, moveGoalDays: 0, mannersDays: 0,
   nightsDone: 0, brushCount: 0, nightLog: [], // bedtime routine
   ramadanFasts: {}, eidYears: [], // Ramadan mode
+  facts: [], arcade: { best: {}, trophies: {} }, // fact bank + mini games
   history: {}, // date -> { plates, quests, water, missing: {veg,grain,protein,dairy} }
   day: null, // { date, quests, water, platesXp, gameRuns, waterHit }
 })
@@ -83,6 +84,8 @@ function load() {
           p.badges = (p.badges || []).filter((b) => b !== 'rainbow')
           delete p.rainbowPlates
           p.completePlates ??= 0
+          p.facts ??= []
+          p.arcade ??= { best: {}, trophies: {} }
           ;(p.plates || []).forEach((pl) => delete pl.rainbow)
         }
       }
@@ -146,6 +149,15 @@ function markActive(p, date, ev) {
   if (p.streak > 1) ev.push({ type: 'toast', key: 'streakUp', n: p.streak })
 }
 
+// trophy thresholds per mini game
+export const TROPHIES = { sort: [150, 300, 500], catch: [100, 200, 350], plate: [60, 120, 200], quiz: [100, 180, 260] }
+export const TROPHY_ORDER = [undefined, 'bronze', 'silver', 'gold']
+export function trophyFor(game, score) {
+  const t = TROPHIES[game]
+  if (!t) return null
+  return score >= t[2] ? 'gold' : score >= t[1] ? 'silver' : score >= t[0] ? 'bronze' : null
+}
+
 function addXp(p, amount, ev) {
   const before = levelInfo(p.xp).level
   p.xp = Math.max(0, p.xp + amount)
@@ -162,7 +174,7 @@ function growPlant(p, amount, ev) {
 }
 
 function checkBadges(p, ev) {
-  const stats = { ...p, uniqueFoods: p.foodsTried.length }
+  const stats = { ...p, uniqueFoods: p.foodsTried.length, factsKnown: (p.facts || []).length, golds: Object.values(p.arcade?.trophies || {}).filter((t) => t === 'gold').length }
   for (const b of BADGES) {
     if (!p.badges.includes(b.id) && b.check(stats)) {
       p.badges.push(b.id)
@@ -447,13 +459,28 @@ export function useStore() {
         markActive(p, date, ev)
       }),
 
-    finishGame: (childId, score) =>
+    // XP from games: 3 runs a day across all games. Best score and a trophy
+    // (bronze / silver / gold) per game.
+    finishGame: (childId, score, game = 'sort') =>
       withChild(childId, (p, ev) => {
         let xp = 0
         if (p.day.gameRuns < 3 && score > 0) xp = Math.min(60, Math.round(score / 2))
         p.day.gameRuns += 1
         if (xp) addXp(p, xp, ev)
-        ev.push({ type: 'gameOver', xp })
+        p.arcade ||= { best: {}, trophies: {} }
+        const prevBest = p.arcade.best[game] || 0
+        const newBest = score > prevBest
+        if (newBest) p.arcade.best[game] = score
+        const tier = trophyFor(game, score)
+        const old = p.arcade.trophies[game]
+        const upgraded = tier && TROPHY_ORDER.indexOf(tier) > TROPHY_ORDER.indexOf(old)
+        if (upgraded) p.arcade.trophies[game] = tier
+        ev.push({ type: 'gameOver', xp, game, newBest: newBest && prevBest > 0, trophy: upgraded ? tier : null })
+      }),
+    learnFact: (childId, factId) =>
+      withChild(childId, (p) => {
+        p.facts ||= []
+        if (!p.facts.includes(factId)) p.facts.push(factId)
       }),
 
     // ---- parent actions ---------------------------------------------------

@@ -100,34 +100,81 @@ function BrushTimer({ onDone }) {
   const start = () => { endAt.current = Date.now() + left * 1000; setRunning(true) }
   const pct = (total - left) / total
   const zoneLeft = left - (BRUSH_ZONES.length - 1 - zone) * BRUSH_ZONE_SEC
-  // quadrants of the mouth: [x, y] centres (viewer's view, child's right = screen left)
-  const Q = { ur: [34, 36], ul: [66, 36], ll: [66, 64], lr: [34, 64] }
+  // Mouth seen from the front. Child's right = viewer's left.
+  // Each quadrant has 6 teeth from the middle outwards (incisors -> molars).
+  const SIDE = { ur: [-1, 'up'], ul: [1, 'up'], ll: [1, 'down'], lr: [-1, 'down'] }
+  const WID = [5.2, 4.6, 4.6, 4.9, 5.6, 5.8]
+  const teeth = (q) => {
+    const [dir, jaw] = SIDE[q]
+    let x = 50 + dir * 0.5
+    return WID.map((w, k) => {
+      const h = (jaw === 'up' ? 9.5 : 8) - k * 0.75
+      const cx = x + (dir * w) / 2
+      x += dir * (w + 0.45)
+      const curve = k * k * 0.12 // the arch curves away at the sides
+      const y = jaw === 'up' ? 49.3 - h - curve : 50.7 + curve
+      return { cx, w, h, y }
+    })
+  }
+  const zoneId = BRUSH_ZONES[zone].id
+  const [bDir, bJaw] = SIDE[zoneId]
+  const bx = 50 + bDir * 13
+  const by = bJaw === 'up' ? 45.5 : 54.5
   return (
     <div className="flex flex-col items-center gap-3">
-      <div className="relative w-56 h-56">
+      <div className="relative w-60 h-60">
         <svg viewBox="0 0 100 100" className="absolute inset-0 -rotate-90">
           <circle cx="50" cy="50" r="46" fill="none" stroke="#ffffff22" strokeWidth="5" />
           <circle cx="50" cy="50" r="46" fill="none" stroke="#fcd34d" strokeWidth="5" strokeLinecap="round" strokeDasharray={289} strokeDashoffset={289 * (1 - pct)} style={{ transition: 'stroke-dashoffset .3s linear' }} />
         </svg>
-        <svg viewBox="0 0 100 100" className="absolute inset-4">
-          <ellipse cx="50" cy="50" rx="38" ry="30" fill="#7f1d1d" opacity=".55" />
+        <svg viewBox="0 0 100 100" className="absolute inset-3 overflow-visible" aria-hidden="true">
+          <defs>
+            <linearGradient id="nl-handle" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#7dd3fc" /><stop offset=".5" stopColor="#0ea5e9" /><stop offset="1" stopColor="#0369a1" /></linearGradient>
+            <linearGradient id="nl-tooth" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ffffff" /><stop offset="1" stopColor="#f1f5f9" /></linearGradient>
+          </defs>
+          {/* lips, mouth, gums, tongue */}
+          <ellipse cx="50" cy="50" rx="41" ry="27" fill="#e11d48" opacity=".9" />
+          <ellipse cx="50" cy="50" rx="37" ry="23" fill="#4c0519" />
+          <path d="M14 47 Q50 30 86 47 L86 43 Q50 24 14 43 Z" fill="#fb7185" />
+          <path d="M14 53 Q50 70 86 53 L86 57 Q50 76 14 57 Z" fill="#fb7185" />
+          <ellipse cx="50" cy="66" rx="17" ry="6" fill="#f43f5e" opacity=".55" />
           {BRUSH_ZONES.map((z, i) => {
-            const [x, y] = Q[z.id]
             const active = running && i === zone
             const done = i < zone || left === 0
             return (
               <g key={z.id}>
-                {[-9, 0, 9].map((dx) => (
-                  <rect key={dx} x={x + dx - 4} y={y - 7} width="8" height="14" rx="3.5" fill={done ? '#ffffff' : active ? '#fef3c7' : '#e5e7eb'} opacity={done || active ? 1 : 0.55}
-                    className={active ? 'night-pulse' : ''} />
+                {teeth(z.id).map((tt, k) => (
+                  <rect key={k} x={tt.cx - tt.w / 2} y={tt.y} width={tt.w} height={tt.h} rx={Math.min(2.4, tt.w / 2.4)}
+                    fill={done ? 'url(#nl-tooth)' : active ? '#fef9e7' : '#efe3bf'} stroke={done ? '#cbd5e1' : '#cdbb86'} strokeWidth=".35"
+                    opacity={done || active ? 1 : 0.8} />
                 ))}
-                {done && <text x={x} y={y + 2} fontSize="8" textAnchor="middle">✨</text>}
+                {done && <text x={50 + SIDE[z.id][0] * 17} y={SIDE[z.id][1] === 'up' ? 36 : 69} fontSize="6" textAnchor="middle">✨</text>}
               </g>
             )
           })}
-          <line x1="14" y1="50" x2="86" y2="50" stroke="#fca5a5" strokeWidth="1.5" opacity=".6" />
+          {/* toothbrush lying on the active teeth, bristles against them */}
+          {running && (
+            <g transform={`translate(${bx} ${by}) scale(${bDir} ${bJaw === 'up' ? 1 : -1})`}>
+              <g>
+                <animateTransform attributeName="transform" type="translate" values="-3 0; 3 0; -3 0" dur="0.45s" repeatCount="indefinite" />
+                {/* bristles (two colours, like a real brush) */}
+                {Array.from({ length: 9 }, (_, k) => (
+                  <rect key={k} x={-9 + k * 1.45} y={-5.4} width="1.05" height="3.6" rx=".4" fill={k % 3 === 1 ? '#22d3ee' : '#ffffff'} />
+                ))}
+                {/* head + neck + handle */}
+                <rect x="-10" y="-2" width="14.5" height="3.6" rx="1.8" fill="#e0f2fe" stroke="#0284c7" strokeWidth=".4" />
+                <path d="M4 -1.4 L12 -0.6 L12 1.4 L4 1.6 Z" fill="#38bdf8" />
+                <rect x="11.5" y="-1.6" width="34" height="5" rx="2.5" fill="url(#nl-handle)" />
+                <rect x="17" y="-0.9" width="10" height="3.6" rx="1.8" fill="#bae6fd" opacity=".85" />
+                <circle cx="41" cy="0.9" r="1" fill="#e0f2fe" />
+                {/* foam */}
+                {[[-7, -6.6, 1.3], [-3.5, -7.4, 1], [0, -6.4, 1.4], [-5, -8.6, .8]].map(([fx, fy, r], k) => (
+                  <circle key={k} cx={fx} cy={fy} r={r} fill="#ffffff" opacity=".85" className="night-pulse" />
+                ))}
+              </g>
+            </g>
+          )}
         </svg>
-        {running && <span className="absolute text-3xl night-brush" style={{ left: `${Q[BRUSH_ZONES[zone].id][0]}%`, top: `${Q[BRUSH_ZONES[zone].id][1] - 6}%` }}>🪥</span>}
       </div>
       <div className="text-center">
         <div className="text-amber-200 font-black text-lg">{left === 0 ? t('brushDone') : running ? `${t('brushNow')}: ${pick(BRUSH_ZONES[zone].name)}` : t('brushTip')}</div>
