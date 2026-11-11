@@ -5,6 +5,8 @@ import { ParentDashboard, PinGate, RecoverGate } from './Parent'
 import { handleBack } from './backStack'
 import { initNative } from './native'
 import { onReminderTap, scheduleReminders } from './reminders'
+import { alarmOccurrences, onAlarm, scheduleAlarms, snoozeAlarm, stopAlarmBurst } from './alarms'
+import AlarmScreen from './AlarmScreen'
 import { autoUpdate, markAppReady } from './updater'
 import { BADGES, STR } from './data'
 import { useStore } from './store'
@@ -62,9 +64,40 @@ export default function App() {
   // Reminders: re-plan the next 3 days whenever progress or settings change
   // (debounced), so today's reminder disappears once the task is done.
   useEffect(() => {
-    const id = setTimeout(() => scheduleReminders(state).catch(() => {}), 1500)
+    const id = setTimeout(() => { scheduleReminders(state).catch(() => {}); scheduleAlarms(state).catch(() => {}) }, 1500)
     return () => clearTimeout(id)
   }, [state])
+
+  // ⏰ ringing alarm: from a notification (phone) or the in-app clock (any device)
+  const [ringing, setRinging] = useState(null)
+  const handled = useRef(new Set())
+  const ring = (a) => { if (!a?.key || handled.current.has(a.key)) return; handled.current.add(a.key); setRinging(a) }
+  useEffect(() => onAlarm(ring), [])
+  const stRef = useRef(state); stRef.current = state
+  useEffect(() => {
+    let last = new Date()
+    const id = setInterval(() => {
+      const now = new Date()
+      const due = alarmOccurrences(stRef.current, last, 1).filter((o) => o.at <= now)
+      last = now
+      if (due.length) ring(due[0])
+    }, 15000)
+    return () => clearInterval(id)
+  }, [])
+  const stopAlarm = () => {
+    const a = ringing
+    setRinging(null)
+    stopAlarmBurst(a.key)
+    // waking up opens the child's morning routine
+    if (a.kind === 'wake' && a.child) { setChildId(a.child); setScreen('child'); setDeepTab({ tab: 'move', n: Date.now() }) }
+  }
+  const snooze = () => {
+    const a = ringing
+    setRinging(null)
+    const again = { ...a, key: a.key + '+z' + Date.now() }
+    stopAlarmBurst(a.key).then(() => snoozeAlarm(again, stRef.current))
+    setTimeout(() => ring(again), 5 * 60000)
+  }
 
   // Tapping a reminder opens that child (or the picker) on the right tab
   useEffect(
@@ -186,6 +219,7 @@ export default function App() {
   return (
     <LangCtx.Provider value={{ lang, gender }}>
       <div className="h-full">{body}</div>
+      {ringing && <AlarmScreen alarm={ringing} child={children.find((c) => c.id === ringing.child)} tone={settings.alarms?.tone} lang={lang} onStop={stopAlarm} onSnooze={snooze} />}
       {toastMsg && <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[70] bg-black/85 text-white px-5 py-2.5 rounded-full text-sm font-bold shadow-lg anim-pop max-w-[90vw] text-center">{toastMsg}</div>}
       {modal && (
         <Modal onClose={() => setModal(null)}>

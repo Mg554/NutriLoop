@@ -118,5 +118,25 @@
       "🍏 First iPhone build (an .ipa installed with Sideloadly)",
       "🔔 iPhone-specific update notice"
     ]
+  },
+  "1.6.0": {
+    "ar": [
+      "🍽️ «شو أكلت؟» بعد الوجبة: كله / نصه / ما أكلته، والحصص بتنحسب من اللي انأكل فعلًا",
+      "🍎 سناك بين الوجبات، وتعديل وحذف وتأكيد الأطباق من الأهل",
+      "📜 سجل يومي للأهل بالوقت (أكل وتمارين ونوم) مع مشاركة، وتمارين الأسبوع بالتقرير",
+      "⏱️ شريط «باقي من التمرين» ودقايق الحركة الباقية",
+      "🏝️ جزيرة الإنجاز: هدف وجائزة وشروط من الأهل، مع طوق نجاة",
+      "💪 ١١ تمرين جديد بـ٤ روتينات (قوة، كارديو، توازن، هادية) وشخصية مرسومة أحلى",
+      "⏰ منبهات: صحيان المدرسة ومنبهات خاصة، بشاشة كاملة وغفوة و٤ نغمات"
+    ],
+    "en": [
+      "🍽️ \"What did you eat?\" after meals: all / half / none; servings count what was really eaten",
+      "🍎 Snacks between meals; parents can edit, delete and confirm plates",
+      "📜 Parents' day log (food, workouts, sleep) with sharing; workouts in the weekly report",
+      "⏱️ Workout time-left bar and minutes left to the movement goal",
+      "🏝️ Streak Island: goal, prize and conditions set by parents, with a life ring",
+      "💪 11 new exercises in 4 routines (strength, cardio, balance, quiet) and a nicer character",
+      "⏰ Alarms: school wake-up and custom alarms, full screen with snooze and 4 tones"
+    ]
   }
 }

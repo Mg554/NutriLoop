@@ -146,6 +146,7 @@ export async function testReminder(state) {
 // Tapping a reminder opens the right tab.
 export function onReminderTap(cb) {
   if (!isNative) return () => {}
-  const h = LocalNotifications.addListener('localNotificationActionPerformed', (e) => cb(e.notification?.extra || {}))
+  // alarms have their own handler (alarms.js)
+  const h = LocalNotifications.addListener('localNotificationActionPerformed', (e) => { if (!e.notification?.extra?.alarm) cb(e.notification?.extra || {}) })
   return () => h.then((x) => x.remove())
 }

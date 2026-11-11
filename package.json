@@ -13,7 +13,7 @@
     "build:native": "vite build --mode native && node -e \"require('fs').rmSync('www/pose/pose-pack.js',{force:true})\"",
     "android": "npm run build:native && npx cap sync android",
     "icons": "node brand/make-icons.mjs && npx capacitor-assets generate --android --iconBackgroundColor '#F2533C' --splashBackgroundColor '#F2533C'",
-    "test": "node tests/count.test.mjs && node tests/growth.test.mjs && node tests/voice.test.mjs && node tests/reminders.test.mjs && node tests/updater.test.mjs && node tests/report.test.mjs && node tests/island.test.mjs"
+    "test": "node tests/count.test.mjs && node tests/growth.test.mjs && node tests/voice.test.mjs && node tests/reminders.test.mjs && node tests/updater.test.mjs && node tests/report.test.mjs && node tests/island.test.mjs && node tests/alarms.test.mjs"
   },
   "dependencies": {
     "@capacitor-community/file-opener": "^8.0.1",

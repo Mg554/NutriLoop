@@ -40,6 +40,9 @@
     <!-- reminders (Android 13+ asks the parent when reminders are turned on) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- alarms ring at the exact minute (Android 13+: granted for alarm clocks) -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.VIBRATE" />
     <!-- in-app update: hand the downloaded APK to the Android installer -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />

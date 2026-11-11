@@ -8,6 +8,7 @@ import ReportView from './modules/report/Report'
 import DayLog from './modules/report/DayLog'
 import { IslandSettings } from './modules/island/Island'
 import RemindersCard from './RemindersCard'
+import AlarmsCard from './AlarmsCard'
 import RamadanSettings from './modules/ramadan/RamadanSettings'
 import { GRATITUDE, bedtimeFor, sleepRangeForAge } from './modules/night/data'
 import UpdatesCard, { UpdateBanner } from './UpdatesCard'
@@ -465,6 +466,7 @@ export function ParentDashboard({ state, actions, onClose, toast, initialReport 
         </div>
       </Card>
       <IslandSettings state={state} actions={actions} />
+      <AlarmsCard state={state} actions={actions} toast={toast} />
       <RemindersCard state={state} actions={actions} toast={toast} />
       <RamadanSettings state={state} actions={actions} />
       <UpdatesCard toast={toast} />
