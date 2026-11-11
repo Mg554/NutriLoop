@@ -11,7 +11,7 @@
 // ---------------------------------------------------------------------------
 import { useEffect, useMemo, useState } from 'react'
 
-const LEN = { torso: 48, neck: 5, head: 19, upper: 26, fore: 24, thigh: 33, shin: 33 }
+const LEN = { torso: 48, neck: 6, head: 16, upper: 26, fore: 24, thigh: 35, shin: 34 }
 const GROUND = 226
 const BASE = { lean: 0, tilt: 0, ash: -12, ael: 0, bsh: 12, bel: 0, ahip: -5, akn: 0, bhip: 5, bkn: 0, lift: 0, shrug: 0, dx: 0, w: 1, hands: 0 }
 
@@ -33,6 +33,21 @@ export const MOVES = {
   knees: { anchor: 'pelvis', p: 620, side: true, f: [{ ahip: 82, akn: -95, bhip: -4, ash: 35, ael: 70, bsh: -35, bel: 70, lift: 4 }, { bhip: 82, bkn: -95, ahip: -4, ash: -35, ael: 70, bsh: 35, bel: 70, lift: 4 }] },
   plank: { p: 2200, side: true, f: [{ lean: 70, ahip: -58, bhip: -56, ash: -5, bsh: 5, hands: 1 }, { lean: 68, ahip: -60, bhip: -58, ash: -4, bsh: 6, hands: 1 }] },
   skip: { p: 460, f: [{ ash: -38, ael: 55, bsh: 38, bel: -55 }, { lift: 16, ash: -30, ael: 40, bsh: 30, bel: -40 }] },
+  // strength
+  wallsit: { p: 2400, side: true, prop: 'wall', anchor: 'pelvis', f: [{ ahip: 86, akn: -88, bhip: 88, bkn: -90, ash: 88, bsh: 92 }, { ahip: 86, akn: -88, bhip: 88, bkn: -90, ash: 84, bsh: 96, shrug: 1 }] },
+  kneepush: { p: 2000, side: true, anchor: 'pelvis', f: [{ lean: 62, ahip: -62, akn: -28, bhip: -60, bkn: -30, ash: -6, bsh: -2, hands: 1 }, { lean: 80, ahip: -80, akn: -10, bhip: -78, bkn: -12, ash: 32, ael: -78, bsh: 36, bel: -80, hands: 1 }] },
+  lunges: { p: 2200, side: true, anchor: 'pelvis', f: [{ ahip: -4, bhip: 4, ash: 0, bsh: 4 }, { ahip: -30, akn: -62, bhip: 72, bkn: -76, ash: -6, bsh: 8, lean: -3 }, { ahip: -4, bhip: 4, ash: 0, bsh: 4 }, { bhip: -30, bkn: -62, ahip: 72, akn: -76, ash: 8, bsh: -6, lean: -3 }] },
+  calves: { p: 1600, f: [{ ash: -10, bsh: 10 }, { lift: 7, ash: -16, bsh: 16 }] },
+  // cardio
+  climber: { p: 700, side: true, anchor: 'pelvis', f: [{ lean: 68, ahip: -60, bhip: 40, bkn: -95, ash: -4, bsh: 2, hands: 1 }, { lean: 68, bhip: -60, ahip: 40, akn: -95, ash: 2, bsh: -4, hands: 1 }] },
+  kicks: { p: 900, side: true, anchor: 'pelvis', f: [{ ahip: -14, akn: -128, bhip: 4, ash: 30, ael: 70, bsh: -30, bel: 70 }, { ahip: -2, bhip: 2, ash: 0, ael: 70, bsh: 0, bel: 70, lift: 3 }, { bhip: -14, bkn: -128, ahip: 4, ash: -30, ael: 70, bsh: 30, bel: 70 }, { ahip: 2, bhip: -2, ash: 0, ael: 70, bsh: 0, bel: 70, lift: 3 }] },
+  skater: { p: 1300, anchor: 'pelvis', f: [{ dx: -16, lean: -10, ahip: -4, bhip: 32, bkn: -50, ash: 60, bsh: 30 }, { lift: 10, ash: 10, bsh: -10 }, { dx: 16, lean: 10, bhip: 4, ahip: -32, akn: 50, ash: -30, bsh: -60 }, { lift: 10, ash: 10, bsh: -10 }] },
+  // balance
+  tree: { p: 3000, anchor: 'pelvis', f: [{ ash: -168, ael: -12, bsh: 168, bel: 12, ahip: -1, bhip: 58, bkn: -148 }, { ash: -172, ael: -8, bsh: 172, bel: 8, ahip: -1, bhip: 60, bkn: -150, lean: 2 }] },
+  airplane: { p: 3000, side: true, anchor: 'pelvis', f: [{ lean: 72, ahip: 0, bhip: -88, ash: -95, bsh: -80 }, { lean: 76, ahip: 0, bhip: -92, ash: -100, bsh: -84 }] },
+  // quiet
+  touch: { p: 1800, f: [{ ash: -35, ael: 150, bsh: 35, bel: -150 }, { ash: -172, bsh: 172 }] },
+  punch: { p: 1400, side: true, anchor: 'pelvis', f: [{ ash: 90, ael: 0, bsh: 30, bel: 110, ahip: -6, bhip: 8 }, { bsh: 90, bel: 0, ash: 30, ael: 110, ahip: -6, bhip: 8 }] },
   // animals (the kid imitates them; the animal emoji shows as a badge)
   frog: { p: 1500, f: [{ ahip: -72, akn: 122, bhip: 72, bkn: -122, ash: -4, bsh: 4, hands: 1 }, { ahip: -72, akn: 122, bhip: 72, bkn: -122, ash: -6, bsh: 6, hands: 1 }, { lift: 40, ash: -160, bsh: 160, ahip: -18, bhip: 18 }] },
   bear: { p: 1000, side: true, f: [{ lean: 112, ash: -8, bsh: 14, ahip: -16, bhip: 6, hands: 1 }, { lean: 112, ash: 14, bsh: -8, ahip: 6, bhip: -16, hands: 1 }] },
@@ -53,7 +68,7 @@ export const PALETTES = {
   navy: { main: '#334155', dark: '#0f172a', trim: '#f472b6', hijab: '#f9a8d4' },
 }
 const HAIR = '#3b2414'
-const shade = (hex, k = 0.85) => '#' + [1, 3, 5].map((i) => Math.round(parseInt(hex.slice(i, i + 2), 16) * k).toString(16).padStart(2, '0')).join('')
+const shade = (hex, k = 0.85) => '#' + [1, 3, 5].map((i) => Math.min(255, Math.round(parseInt(hex.slice(i, i + 2), 16) * k)).toString(16).padStart(2, '0')).join('')
 
 const rad = (d) => (d * Math.PI) / 180
 const dir = (deg) => ({ x: Math.sin(rad(deg)), y: Math.cos(rad(deg)) })
@@ -116,35 +131,58 @@ function place(r, q, anchorMode, shift) {
 }
 
 const seg = (a, b, k) => ({ x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k })
-const L = (a, b, color, width) => <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={color} strokeWidth={width} strokeLinecap="round" />
+const OUT = '#3a2a22' // soft outline colour (cartoon-studio style)
+const SKIN = { base: '#e9b48c', back: '#d69f78', light: '#f6cfae', line: '#a8704c' }
 
-function Figure({ k, look, gender, outfit, color }) {
+// a limb drawn as one stroked path: outline -> colour -> highlight on top
+function Limb({ pts, color, width, light, back }) {
+  const d = `M ${pts.map((p) => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' L ')}`
+  return (
+    <g>
+      <path d={d} fill="none" stroke={OUT} strokeOpacity={back ? 0.55 : 0.75} strokeWidth={width + 2.6} strokeLinecap="round" strokeLinejoin="round" />
+      <path d={d} fill="none" stroke={color} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" />
+      {light && !back && <path d={d} fill="none" stroke={light} strokeOpacity=".55" strokeWidth={width * 0.28} strokeLinecap="round" strokeLinejoin="round" transform={`translate(${-width * 0.22} ${-width * 0.12})`} />}
+    </g>
+  )
+}
+
+// sneaker pointing along the shin direction (side) or forward (front)
+function Shoe({ f, kn, side, color, sole }) {
+  const dx = f.x - kn.x, dy = f.y - kn.y
+  const ang = side ? (Math.atan2(dy, dx) * 180) / Math.PI - 90 : 0
+  return (
+    <g transform={`translate(${f.x} ${f.y}) rotate(${ang})`}>
+      <path d={side ? 'M -6 -4 C -6 -9, 4 -8, 8 -3 C 13 -2, 15 1, 14 4 L -7 4 Z' : 'M -8 -4 C -8 -9, 8 -9, 8 -4 L 9 4 L -9 4 Z'} fill={color} stroke={OUT} strokeWidth="1.3" strokeLinejoin="round" />
+      <path d={side ? 'M -7 4 L 14 4 L 14 6 Q 4 8 -7 6 Z' : 'M -9 4 L 9 4 L 9 6.5 L -9 6.5 Z'} fill={sole} stroke={OUT} strokeWidth="1" />
+      <path d={side ? 'M -1 -6 L 4 -4 M 1 -7 L 6 -5' : 'M -3 -6 L 3 -6 M -3 -3.5 L 3 -3.5'} stroke={sole} strokeWidth="1.1" strokeLinecap="round" />
+    </g>
+  )
+}
+
+function Figure({ k, look, gender, outfit, color, prop }) {
   const pal = PALETTES[color] || PALETTES[gender === 'f' ? 'pink' : 'blue']
   const suit = outfit === 'tracksuit'
-  const skin = '#e8b48a', skinB = '#d39d74'
-  const top = pal.main, topB = shade(pal.main)
-  const bottom = suit ? pal.dark : '#1e3a8a', bottomB = shade(bottom, 0.8)
-  const shoe = suit ? '#f8fafc' : '#334155', sole = suit ? pal.dark : '#1f2937'
+  const top = pal.main, topB = shade(pal.main), topL = shade(pal.main, 1.25)
+  const bottom = suit ? pal.dark : '#1e3a8a', bottomB = shade(bottom, 0.8), bottomL = shade(bottom, 1.5)
+  const shoe = suit ? '#f8fafc' : '#f1f5f9', sole = suit ? pal.dark : '#ef4444'
+  const side = k.w < 1
 
-  // a limb is ONE path through its joints -> no gaps at elbows / knees
-  const poly = (pts, color, width) => (
-    <path d={`M ${pts.map((p) => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' L ')}`} fill="none" stroke={color} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" />
-  )
   const leg = ([h, kn, f], back) => (
     <g>
       {suit ? (
         <>
-          {poly([h, kn, f], back ? bottomB : bottom, 13)}
-          {!back && poly([seg(h, kn, 0.15), kn, seg(kn, f, 0.8)], pal.trim, 2)}
+          <Limb pts={[h, kn, f]} color={back ? bottomB : bottom} width={13} light={bottomL} back={back} />
+          {!back && <Limb pts={[seg(h, kn, 0.15), kn, seg(kn, f, 0.78)]} color={pal.trim} width={1.8} />}
         </>
       ) : (
         <>
-          {poly([h, kn, f], back ? skinB : skin, 10)}
-          {poly([h, seg(h, kn, 0.5)], back ? bottomB : bottom, 15)}
-          {poly([seg(kn, f, 0.8), f], '#ffffff', 10)}
+          <Limb pts={[h, kn, f]} color={back ? SKIN.back : SKIN.base} width={10} light={SKIN.light} back={back} />
+          {/* shorts + white socks */}
+          <Limb pts={[h, seg(h, kn, 0.55)]} color={back ? bottomB : bottom} width={15} light={bottomL} back={back} />
+          <Limb pts={[seg(kn, f, 0.72), f]} color="#ffffff" width={10} />
         </>
       )}
-      <ellipse cx={f.x} cy={f.y + 1} rx={7.5} ry={5} fill={shoe} stroke={sole} strokeWidth={1.5} />
+      <Shoe f={f} kn={kn} side={side} color={back ? shade(shoe, 0.9) : shoe} sole={sole} />
     </g>
   )
   const armEl = ([sh, e, h], back) => {
@@ -153,74 +191,100 @@ function Figure({ k, look, gender, outfit, color }) {
       <g>
         {suit ? (
           <>
-            {poly([sh, e, h], c, 12)}
-            {!back && poly([seg(sh, e, 0.2), e, seg(e, h, 0.75)], pal.trim, 2)}
-            {poly([seg(e, h, 0.84), seg(e, h, 0.88)], pal.trim, 12)}
+            <Limb pts={[sh, e, h]} color={c} width={11.5} light={topL} back={back} />
+            {!back && <Limb pts={[seg(sh, e, 0.2), e, seg(e, h, 0.72)]} color={pal.trim} width={1.8} />}
+            <Limb pts={[seg(e, h, 0.82), seg(e, h, 0.86)]} color={pal.trim} width={11.5} />
           </>
         ) : (
           <>
-            {poly([sh, e, h], back ? skinB : skin, 9)}
-            {poly([sh, seg(sh, e, 0.45)], c, 13)}
+            <Limb pts={[sh, e, h]} color={back ? SKIN.back : SKIN.base} width={8.5} light={SKIN.light} back={back} />
+            {/* t-shirt sleeve with a hem */}
+            <Limb pts={[sh, seg(sh, e, 0.5)]} color={c} width={13} light={topL} back={back} />
+            <Limb pts={[seg(sh, e, 0.46), seg(sh, e, 0.5)]} color={shade(c, 0.8)} width={13} />
           </>
         )}
-        {/* shoulder cap joins the sleeve to the body */}
-        <circle cx={sh.x} cy={sh.y} r={7.5} fill={c} />
-        <circle cx={h.x} cy={h.y} r={5} fill={back ? skinB : skin} />
+        <circle cx={sh.x} cy={sh.y} r={7.2} fill={c} />
+        {/* mitten hand */}
+        <ellipse cx={h.x} cy={h.y} rx={5.2} ry={4.6} fill={back ? SKIN.back : SKIN.base} stroke={OUT} strokeOpacity=".7" strokeWidth="1.2" />
       </g>
     )
   }
   const H = k.H
-  const shadowW = Math.max(14, 34 - k.lift * 0.5)
+  const shadowW = Math.max(14, 36 - k.lift * 0.5)
   const { P, S, up, across, w } = k
-  // torso: wider at the shoulders than the waist, rounded corners
-  const torso = [add(S, across, -15 * w), add(S, across, 15 * w), add(P, across, 12 * w), add(P, across, -12 * w)]
-  // pelvis block in the bottoms colour, covers where the legs join
-  const hips = [add(P, across, -12 * w), add(P, across, 12 * w), add(add(P, across, 11 * w), up, -10), add(add(P, across, -11 * w), up, -10)]
-  const shape = (pts, color) => <path d={`M ${pts.map((p) => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' L ')} Z`} fill={color} stroke={color} strokeWidth={8} strokeLinejoin="round" />
+  // torso: shoulders -> waist with soft curves (bezier through the corners)
+  const sL = add(S, across, -15 * w), sR = add(S, across, 15 * w), wL = add(P, across, -11.5 * w), wR = add(P, across, 11.5 * w)
+  const mid = (a, b) => seg(a, b, 0.5)
+  const torsoD = `M ${sL.x} ${sL.y} Q ${mid(sL, sR).x + up.x * 3} ${mid(sL, sR).y + up.y * 3} ${sR.x} ${sR.y} Q ${mid(sR, wR).x + across.x * 2 * w} ${mid(sR, wR).y + across.y * 2 * w} ${wR.x} ${wR.y} L ${wL.x} ${wL.y} Q ${mid(sL, wL).x - across.x * 2 * w} ${mid(sL, wL).y - across.y * 2 * w} ${sL.x} ${sL.y} Z`
+  const hips = [add(P, across, -12 * w), add(P, across, 12 * w), add(add(P, across, 11 * w), up, -11), add(add(P, across, -11 * w), up, -11)]
+  const shape = (pts, color) => <path d={`M ${pts.map((p) => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' L ')} Z`} fill={color} stroke={OUT} strokeOpacity=".7" strokeWidth={2} strokeLinejoin="round" />
   const hijab = look === 'hijab'
+  const gid = `g${color || gender}${outfit}`
+  const r = 15.5 // head radius (less "chibi", closer to real proportions)
 
   return (
     <g>
-      <ellipse cx={100} cy={GROUND} rx={shadowW} ry={5} fill="rgba(0,0,0,.12)" />
+      <defs>
+        <linearGradient id={`${gid}t`} x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor={topL} /><stop offset=".55" stopColor={top} /><stop offset="1" stopColor={topB} /></linearGradient>
+        <radialGradient id={`${gid}f`} cx=".38" cy=".35" r=".75"><stop offset="0" stopColor={SKIN.light} /><stop offset=".7" stopColor={SKIN.base} /><stop offset="1" stopColor={SKIN.back} /></radialGradient>
+        <radialGradient id={`${gid}h`} cx=".35" cy=".25" r=".8"><stop offset="0" stopColor="#6b4428" /><stop offset=".6" stopColor={HAIR} /><stop offset="1" stopColor="#24150b" /></radialGradient>
+      </defs>
+      {/* exercise mat + soft shadow */}
+      <rect x={34} y={GROUND - 2} width={132} height={7} rx={3.5} fill="#86efac" opacity=".55" />
+      <ellipse cx={100} cy={GROUND} rx={shadowW} ry={4.5} fill="rgba(0,0,0,.16)" />
+      {prop === 'wall' && <rect x={P.x - 24} y={GROUND - 150} width={9} height={150} rx={2} fill="#cbd5e1" stroke="#94a3b8" />}
       {armEl(k.armA, true)}
       {leg(k.legA, true)}
       {leg(k.legB, false)}
       {shape(hips, bottom)}
-      {poly([S, add(S, up, 8)], skin, 9)}
-      {shape(torso, top)}
-      {suit && w === 1 && poly([add(P, up, 2), add(S, up, -3)], pal.trim, 2)}
-      {suit && poly([add(P, across, -12 * w), add(P, across, 12 * w)], pal.trim, 4)}
-      {/* a hijab drapes over the shoulders, so the front arm goes under it */}
+      <Limb pts={[S, add(S, up, 8)]} color={SKIN.base} width={9} />
+      <path d={torsoD} fill={`url(#${gid}t)`} stroke={OUT} strokeOpacity=".7" strokeWidth={2} strokeLinejoin="round" />
+      {/* collar / zip */}
+      {!side && (suit
+        ? <Limb pts={[add(P, up, 3), add(S, up, -2)]} color={pal.trim} width={2} />
+        : <path d={`M ${add(S, across, -5).x} ${add(S, across, -5).y} Q ${add(add(S, up, -5), across, 0).x} ${add(add(S, up, -5), across, 0).y} ${add(S, across, 5).x} ${add(S, across, 5).y}`} stroke={shade(top, 0.75)} strokeWidth="2" fill="none" />)}
+      {suit && <Limb pts={[add(P, across, -11 * w), add(P, across, 11 * w)]} color={pal.trim} width={3.5} />}
       {hijab && armEl(k.armB, false)}
       {/* head */}
       <g transform={`rotate(${k.tiltDeg} ${H.x} ${H.y})`}>
-        {look === 'hijab' ? (
+        {hijab ? (
           <>
-            {/* scarf drapes over shoulders and chest, rounded hem */}
-            <path d={`M ${H.x - 22} ${H.y - 2} C ${H.x - 24} ${H.y - 30}, ${H.x + 24} ${H.y - 30}, ${H.x + 22} ${H.y - 2} C ${H.x + 24} ${H.y + 14}, ${H.x + 27} ${H.y + 24}, ${H.x + 24} ${H.y + 34} Q ${H.x} ${H.y + 46} ${H.x - 24} ${H.y + 34} C ${H.x - 27} ${H.y + 24}, ${H.x - 24} ${H.y + 14}, ${H.x - 22} ${H.y - 2} Z`} fill={pal.hijab} />
-            <path d={`M ${H.x - 14} ${H.y + 22} Q ${H.x} ${H.y + 30} ${H.x + 14} ${H.y + 22}`} stroke={shade(pal.hijab, 0.85)} strokeWidth="2" fill="none" />
-            <ellipse cx={H.x} cy={H.y + 1} rx={16.5} ry={17.5} fill={shade(pal.hijab, 0.9)} />
-            <ellipse cx={H.x} cy={H.y + 2} rx={14.5} ry={15.5} fill={skin} />
+            <path d={`M ${H.x - 21} ${H.y - 2} C ${H.x - 23} ${H.y - 29}, ${H.x + 23} ${H.y - 29}, ${H.x + 21} ${H.y - 2} C ${H.x + 23} ${H.y + 14}, ${H.x + 26} ${H.y + 24}, ${H.x + 23} ${H.y + 33} Q ${H.x} ${H.y + 45} ${H.x - 23} ${H.y + 33} C ${H.x - 26} ${H.y + 24}, ${H.x - 23} ${H.y + 14}, ${H.x - 21} ${H.y - 2} Z`} fill={pal.hijab} stroke={OUT} strokeOpacity=".6" strokeWidth="1.6" />
+            <path d={`M ${H.x - 13} ${H.y + 21} Q ${H.x} ${H.y + 29} ${H.x + 13} ${H.y + 21}`} stroke={shade(pal.hijab, 0.8)} strokeWidth="2" fill="none" />
+            <path d={`M ${H.x - 16} ${H.y - 12} Q ${H.x - 4} ${H.y - 24} ${H.x + 10} ${H.y - 20}`} stroke="#ffffff" strokeOpacity=".45" strokeWidth="3" fill="none" strokeLinecap="round" />
+            <ellipse cx={H.x} cy={H.y + 1.5} rx={r - 0.5} ry={r + 0.5} fill={shade(pal.hijab, 0.88)} />
+            <ellipse cx={H.x} cy={H.y + 2.5} rx={r - 2.2} ry={r - 1.2} fill={`url(#${gid}f)`} />
           </>
         ) : (
           <>
             {look === 'ponytail' && (
               <>
-                <ellipse cx={H.x - 20} cy={H.y - 2} rx={8} ry={12} fill={HAIR} transform={`rotate(-25 ${H.x - 20} ${H.y - 2})`} />
-                <circle cx={H.x - 15} cy={H.y - 9} r={3.5} fill={pal.main} />
+                <path d={`M ${H.x - 13} ${H.y - 10} C ${H.x - 30} ${H.y - 14}, ${H.x - 32} ${H.y + 6}, ${H.x - 24} ${H.y + 16} C ${H.x - 22} ${H.y + 6}, ${H.x - 20} ${H.y - 2}, ${H.x - 11} ${H.y - 4} Z`} fill={`url(#${gid}h)`} stroke={OUT} strokeOpacity=".6" strokeWidth="1.3" />
+                <circle cx={H.x - 14} cy={H.y - 9} r={3.4} fill={pal.main} stroke={OUT} strokeOpacity=".5" />
               </>
             )}
-            <circle cx={H.x} cy={H.y - 3} r={20} fill={HAIR} />
-            <circle cx={H.x} cy={H.y + 2} r={17.5} fill={skin} />
-            <path d={`M ${H.x - 17} ${H.y - 4} Q ${H.x - 6} ${H.y - 16} ${H.x + 4} ${H.y - 8} Q ${H.x + 12} ${H.y - 15} ${H.x + 17} ${H.y - 4} L ${H.x + 18} ${H.y - 12} Q ${H.x} ${H.y - 26} ${H.x - 18} ${H.y - 12} Z`} fill={HAIR} />
+            {/* ears */}
+            <ellipse cx={H.x - r + 0.5} cy={H.y + 3} rx={3.3} ry={4.3} fill={SKIN.base} stroke={OUT} strokeOpacity=".55" strokeWidth="1.2" />
+            <ellipse cx={H.x + r - 0.5} cy={H.y + 3} rx={3.3} ry={4.3} fill={SKIN.base} stroke={OUT} strokeOpacity=".55" strokeWidth="1.2" />
+            <ellipse cx={H.x} cy={H.y + 2} rx={r} ry={r + 1} fill={`url(#${gid}f)`} stroke={OUT} strokeOpacity=".7" strokeWidth="1.6" />
+            {/* hair cap with a fringe and a shine */}
+            <path d={`M ${H.x - r - 0.8} ${H.y + 1} C ${H.x - r - 3} ${H.y - r - 6}, ${H.x + r + 3} ${H.y - r - 6}, ${H.x + r + 0.8} ${H.y + 1} C ${H.x + r - 2} ${H.y - 7}, ${H.x + 6} ${H.y - 9}, ${H.x + 2} ${H.y - 6} C ${H.x - 2} ${H.y - 11}, ${H.x - 9} ${H.y - 6}, ${H.x - r - 0.8} ${H.y + 1} Z`} fill={`url(#${gid}h)`} stroke={OUT} strokeOpacity=".7" strokeWidth="1.4" />
+            <path d={`M ${H.x - 9} ${H.y - 13} Q ${H.x - 1} ${H.y - 18} ${H.x + 7} ${H.y - 14}`} stroke="#ffffff" strokeOpacity=".35" strokeWidth="2.4" fill="none" strokeLinecap="round" />
           </>
         )}
-        {/* face */}
-        <circle cx={H.x - 5.5} cy={H.y + 2} r={2.2} fill="#2b1d16" />
-        <circle cx={H.x + 5.5} cy={H.y + 2} r={2.2} fill="#2b1d16" />
-        <circle cx={H.x - 9} cy={H.y + 8} r={2.8} fill="#f9a8a8" opacity=".7" />
-        <circle cx={H.x + 9} cy={H.y + 8} r={2.8} fill="#f9a8a8" opacity=".7" />
-        <path d={`M ${H.x - 4.5} ${H.y + 9} Q ${H.x} ${H.y + 13.5} ${H.x + 4.5} ${H.y + 9}`} stroke="#2b1d16" strokeWidth="2" fill="none" strokeLinecap="round" />
+        {/* face: brows, eyes with highlights, nose, cheeks, smile */}
+        <path d={`M ${H.x - 8.5} ${H.y - 3.2} q 3 -2 6 0 M ${H.x + 2.5} ${H.y - 3.2} q 3 -2 6 0`} stroke="#4a2e1d" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        {[-5.5, 5.5].map((dx) => (
+          <g key={dx}>
+            <ellipse cx={H.x + dx} cy={H.y + 2} rx={2.6} ry={3} fill="#ffffff" />
+            <circle cx={H.x + dx + (side ? 0.8 : 0)} cy={H.y + 2.4} r={1.9} fill="#3b2416" />
+            <circle cx={H.x + dx + 0.6 + (side ? 0.8 : 0)} cy={H.y + 1.6} r={0.7} fill="#ffffff" />
+          </g>
+        ))}
+        <path d={`M ${H.x} ${H.y + 4.5} q 1.5 2.5 -0.8 3.3`} stroke={SKIN.line} strokeWidth="1.2" fill="none" strokeLinecap="round" />
+        <ellipse cx={H.x - 9} cy={H.y + 8.5} rx={2.8} ry={1.8} fill="#f08f8f" opacity=".45" />
+        <ellipse cx={H.x + 9} cy={H.y + 8.5} rx={2.8} ry={1.8} fill="#f08f8f" opacity=".45" />
+        <path d={`M ${H.x - 4} ${H.y + 10} Q ${H.x} ${H.y + 13.5} ${H.x + 4} ${H.y + 10}`} stroke="#7a3b2e" strokeWidth="1.7" fill="#fff5f5" strokeLinecap="round" />
       </g>
       {!hijab && armEl(k.armB, false)}
     </g>
@@ -247,11 +311,11 @@ export default function Kid({ ex, look = 'short', gender = 'm', outfit, color, s
     const rest = skeletonRaw({ ...BASE, ...mv.f[0] }, mv.side)
     return bboxCenter(rest) - anchorOf(rest, anchor)
   }, [mv, anchor])
-  const q = lerpPose(mv.f, t)
+  const q = lerpPose(mv.f, playing ? t : (phase ?? t))
   const k = place(skeletonRaw(q, mv.side), q, anchor, shift)
   return (
     <svg viewBox="0 0 200 240" width={size} height={size * 1.2} className={className} role="img" aria-label={ex}>
-      <Figure k={k} look={look} gender={gender} outfit={outfit || (look === 'hijab' ? 'tracksuit' : 'sport')} color={color} />
+      <Figure k={k} look={look} gender={gender} outfit={outfit || (look === 'hijab' ? 'tracksuit' : 'sport')} color={color} prop={mv.prop} />
     </svg>
   )
 }
