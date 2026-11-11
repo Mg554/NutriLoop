@@ -55,6 +55,14 @@ jobs:
       - name: Copy web app into the Android project
         run: npx cap sync android
 
+      # the iPhone job packs exactly the same web app (same build number)
+      - uses: actions/upload-artifact@v6
+        if: env.NL_RELEASE != ''
+        with:
+          name: www
+          path: www
+          retention-days: 3
+
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -144,3 +152,69 @@ jobs:
             NutriLoop-*.apk
             bundle-*.zip
             latest.json
+
+  # ---------------------------------------------------------------------------
+  # iPhone: unsigned .ipa (no Apple Developer account). The parent installs it
+  # with Sideloadly / AltStore using a free Apple ID, which signs it.
+  # Only for releases (macOS minutes are expensive on private repos).
+  ios:
+    needs: build
+    if: inputs.version != '' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Version
+        run: |
+          V="${{ inputs.version }}"; [ -z "$V" ] && V="${GITHUB_REF_NAME#v}"
+          echo "NL_VERSION_NAME=$V" >> "$GITHUB_ENV"
+          echo "NL_RELEASE=v$V" >> "$GITHUB_ENV"
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: www
+          path: www
+
+      - name: Copy web app into the iOS project (pod install)
+        run: npx cap sync ios
+
+      - name: Build (unsigned)
+        working-directory: ios/App
+        run: |
+          xcodebuild -workspace App.xcworkspace -scheme App -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build \
+            MARKETING_VERSION="$NL_VERSION_NAME" CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build | tail -40
+
+      - name: Package .ipa
+        run: |
+          mkdir -p Payload
+          cp -R ios/App/build/Build/Products/Release-iphoneos/App.app Payload/
+          zip -qry "NutriLoop-${NL_VERSION_NAME}.ipa" Payload
+          ls -la NutriLoop-*.ipa
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: NutriLoop-${{ env.NL_VERSION_NAME }}-ios
+          path: NutriLoop-*.ipa
+          retention-days: 30
+
+      - name: Attach to the releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASES_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+        run: |
+          gh release upload "$NL_RELEASE" NutriLoop-*.ipa --clobber -R "${{ github.repository }}"
+          if [ -n "$RELEASES_TOKEN" ]; then
+            GH_TOKEN="$RELEASES_TOKEN" gh release upload "$NL_RELEASE" NutriLoop-*.ipa --clobber -R Mg554/NutriLoop_releases
+          fi

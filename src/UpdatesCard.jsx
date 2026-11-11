@@ -5,11 +5,25 @@
 //  - UpdatesCard: settings card with version, "check now" and a manual
 //    download link as a fallback
 import { useEffect, useState } from 'react'
-import { isNative } from './native'
+import { isIOS, isNative } from './native'
 import { APP_BUILD, APP_VERSION, applyNow, checkForUpdate, downloadAndInstallApk, downloadOta, updateState } from './updater'
 import { Card, useT } from './ui'
 
 const RELEASES_PAGE = 'https://github.com/Mg554/NutriLoop_releases/releases/latest'
+
+// iPhone (free Apple ID, no App Store): a native update is a new .ipa that the
+// parent installs again with Sideloadly / AltStore. Data stays.
+function IpaNotice({ m, T, lang }) {
+  const notes = m.notes?.[lang] || []
+  return (
+    <div className="rounded-3xl p-4 shadow-lg space-y-2.5 text-white" style={{ background: 'linear-gradient(135deg,#F2533C,#f59e0b)' }}>
+      <p className="font-black">🎁 {T(`في نسخة آيفون جديدة ${m.version}`, `New iPhone version ${m.version}`)}</p>
+      {notes.length > 0 && <ul className="text-xs list-disc ps-5 space-y-0.5 opacity-95">{notes.slice(0, 4).map((n, i) => <li key={i}>{n}</li>)}</ul>}
+      <button onClick={() => { window.location.href = m.ipa?.url || RELEASES_PAGE }} className="w-full py-3 rounded-2xl bg-white text-[var(--primary)] font-black">⬇️ {T('صفحة التنزيل', 'Download page')}</button>
+      <p className="text-[11px] opacity-90">{T('نزّلوا ملف NutriLoop.ipa على الكمبيوتر وثبّتوه فوق النسخة الحالية بـ Sideloadly. البيانات بتضل محفوظة.', 'Download NutriLoop.ipa on the computer and install it over the current app with Sideloadly. Your data stays.')}</p>
+    </div>
+  )
+}
 
 function useUpdate(toast, { auto = false } = {}) {
   const { lang } = useT()
@@ -60,6 +74,7 @@ const Progress = ({ p }) => (
 export function UpdateBanner({ toast }) {
   const { st, T, lang, installApk, openLink, otaReady, apk } = useUpdate(toast, { auto: true })
   if (!isNative) return null
+  if (st.result?.type === 'ipa') return <IpaNotice m={st.result.manifest} T={T} lang={lang} />
   if (apk) {
     const notes = apk.notes?.[lang] || []
     return (
@@ -120,8 +135,9 @@ export default function UpdatesCard({ toast }) {
           )}
         </div>
       )}
+      {st.result?.type === 'ipa' && <IpaNotice m={st.result.manifest} T={T} lang={lang} />}
       {st.result?.type === 'ota' && !otaReady && notes.length > 0 && <ul className="text-xs list-disc ps-5">{notes.map((n, i) => <li key={i}>{n}</li>)}</ul>}
-      {isNative && (
+      {isNative && !isIOS && (
         <button onClick={openLink} className="text-xs font-bold underline text-[var(--text-soft)]">🌐 {T('تنزيل آخر نسخة من المتصفح (إذا التحديث من جوّا ما زبط)', 'Download the latest APK in the browser (if in-app update fails)')}</button>
       )}
     </Card>

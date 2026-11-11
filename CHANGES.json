@@ -108,5 +108,15 @@
       "🪥 A realistic toothbrush at teeth level",
       "🤲 \"May Allah protect you\" at the end of the Star Journey"
     ]
+  },
+  "1.5.1": {
+    "ar": [
+      "🍏 أول نسخة للآيفون (ملف ipa بيتثبّت بـ Sideloadly)",
+      "🔔 تنبيه تحديث خاص بالآيفون"
+    ],
+    "en": [
+      "🍏 First iPhone build (an .ipa installed with Sideloadly)",
+      "🔔 iPhone-specific update notice"
+    ]
   }
 }

@@ -15,7 +15,7 @@ import { CapacitorUpdater } from '@capgo/capacitor-updater'
 import { Filesystem, Directory } from '@capacitor/filesystem'
 import { FileOpener } from '@capacitor-community/file-opener'
 import nacl from 'tweetnacl'
-import { isNative } from './native'
+import { isIOS, isNative } from './native'
 import { NATIVE_LEVEL } from './nativeLevel'
 
 export const MANIFEST_URL = 'https://github.com/Mg554/NutriLoop_releases/releases/latest/download/latest.json'
@@ -38,9 +38,10 @@ export function verifyManifest(doc, publicKey = PUBLIC_KEY) {
   const m = JSON.parse(doc.m)
   return m?.app === 'nutriloop' ? m : null
 }
-export function decide(m, { build = APP_BUILD, native = NATIVE_LEVEL } = {}) {
+export function decide(m, { build = APP_BUILD, native = NATIVE_LEVEL, ios = isIOS } = {}) {
   if (!m || !(m.build > build)) return { type: 'none', manifest: m }
-  return { type: m.native > native ? 'apk' : 'ota', manifest: m }
+  if (m.native > native) return { type: ios ? 'ipa' : 'apk', manifest: m }
+  return { type: 'ota', manifest: m }
 }
 
 const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {} } catch { return {} } }

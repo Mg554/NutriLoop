@@ -36,4 +36,6 @@ check('newer build, same native -> silent OTA', decide(m, { build: 41, native: m
 check('newer build, higher native -> APK', decide(m, { build: 41, native: m.native - 1 }).type === 'apk')
 check('same build -> nothing', decide(m, { build: 42, native: 9 }).type === 'none')
 check('older manifest -> nothing (no downgrade)', decide(m, { build: 50, native: 9 }).type === 'none')
-const pass = ok.every(Boolean); console.log(pass ? 'PASS' : 'FAIL'); process.exit(pass ? 0 : 1)
+const pass = ok.every(Boolean); check('iPhone: newer native -> ipa (manual install), never apk', decide({ build: 99, native: 9 }, { build: 1, native: 3, ios: true }).type === 'ipa')
+check('iPhone: same native -> ota', decide({ build: 99, native: 3 }, { build: 1, native: 3, ios: true }).type === 'ota')
+console.log(pass ? 'PASS' : 'FAIL'); process.exit(pass ? 0 : 1)

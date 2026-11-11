@@ -50,7 +50,7 @@ export default function App() {
   const [apkUpdate, setApkUpdate] = useState(false)
   useEffect(() => {
     markAppReady()
-    const id = setTimeout(() => autoUpdate().then((r) => setApkUpdate(r?.type === 'apk')), 4000)
+    const id = setTimeout(() => autoUpdate().then((r) => setApkUpdate(r?.type === 'apk' || r?.type === 'ipa')), 4000)
     return () => clearTimeout(id)
   }, [])
 

@@ -24,6 +24,8 @@ const manifest = {
   notes: changes[v] || { ar: [], en: [] },
   apk: file(`NutriLoop-${v}.apk`),
   bundle: file(`bundle-${v}.zip`),
+  // iPhone build (made by the ios job of the same run, installed by hand)
+  ipa: { url: `https://github.com/${repo}/releases/download/v${v}/NutriLoop-${v}.ipa` },
 }
 const m = JSON.stringify(manifest)
 const sig = Buffer.from(nacl.sign.detached(new TextEncoder().encode(m), Uint8Array.from(Buffer.from(key, 'base64')))).toString('base64')

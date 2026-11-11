@@ -12,6 +12,15 @@ import { App } from '@capacitor/app'
 import { StatusBar, Style } from '@capacitor/status-bar'
 
 export const isNative = Capacitor.isNativePlatform()
+export const isIOS = Capacitor.getPlatform() === 'ios'
+// iPhone: the page runs edge-to-edge (viewport-fit=cover); #root is padded by
+// the notch / status bar height in CSS (html.ios)
+// (done at runtime so ONE web bundle serves Android and iPhone, also via OTA)
+if (isIOS && typeof document !== 'undefined') {
+  document.documentElement.classList.add('ios')
+  const vp = document.querySelector('meta[name=viewport]')
+  if (vp && !/viewport-fit/.test(vp.content)) vp.content += ', viewport-fit=cover'
+}
 
 // ---- 1. text to speech -------------------------------------------------------
 // Android WebView has no window.speechSynthesis -> use the system TTS engine.
@@ -37,7 +46,7 @@ export async function nativeListen(lang) {
   const tryLang = async (language) =>
     (await SpeechRecognition.start({ language, maxResults: 5, prompt: '', partialResults: false, popup: false }))?.matches || []
   try {
-    return await tryLang(lang === 'ar' ? 'ar-PS' : 'en-US')
+    return await tryLang(lang === 'ar' ? (isIOS ? 'ar-SA' : 'ar-PS') : 'en-US') // iOS has no ar-PS recogniser
   } catch (e) {
     const msg = String(e?.message || e)
     if (lang === 'ar' && /language/i.test(msg)) return tryLang('ar-JO')
