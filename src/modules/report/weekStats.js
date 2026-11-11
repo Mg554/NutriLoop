@@ -42,6 +42,7 @@ function measure(child, p, days) {
     return {
       date: d,
       plates: h.plates || 0,
+      snacks: h.snacks || 0,
       serv: h.serv || {},
       kcal: h.kcal || 0,
       water: h.water || 0,
@@ -61,6 +62,7 @@ function measure(child, p, days) {
     loggedDays: logged.length,
     activeDays: rows.filter((r) => r.plates || r.water || r.move || r.quests || r.night).length,
     plates: rows.reduce((s, r) => s + r.plates, 0),
+    snacks: rows.reduce((s, r) => s + r.snacks, 0),
     servAvg,
     kcalAvg: logged.length ? logged.reduce((s, r) => s + r.kcal, 0) / logged.length : null,
     waterAvg: rows.reduce((s, r) => s + r.water, 0) / 7,
@@ -131,11 +133,24 @@ export function weekReport(child, p = {}, end = new Date()) {
   wins.sort((x, y) => y.score - x.score)
   focus.sort((x, y) => y.score - x.score)
 
+  // exercise sessions this week, grouped by exercise / routine
+  const sessions = (p.moveLog || []).filter((m) => inWeek.has(m.date))
+  const byKind = {}
+  for (const m of sessions) {
+    const k = m.kind + ':' + m.id
+    byKind[k] ||= { emoji: m.emoji, title: m.title, n: 0, seconds: 0, complete: 0 }
+    byKind[k].n += 1; byKind[k].seconds += m.seconds; if (m.complete) byKind[k].complete += 1
+  }
+  const workouts = Object.values(byKind).sort((a, b) => b.seconds - a.seconds)
+  // how honest / complete the "what did you eat" check was
+  const weekPlates = (p.plates || []).filter((pl) => inWeek.has(pl.date || dayKey(new Date(pl.ts))) && pl.meal !== 'snack')
+  const eatChecked = weekPlates.filter((pl) => pl.eaten).length
+
   // ---- week-over-week trend ------------------------------------------------
   const trend = (k) => (prev.activeDays ? cur[k] - prev[k] : null)
 
   return {
-    days, cur, prev, a, target, daysMet, newFoods, meals, vegGap, bedtime, lateBy, enough,
+    days, cur, prev, a, target, sessions: sessions.length, workouts, eatChecked, mealsLogged: weekPlates.length, daysMet, newFoods, meals, vegGap, bedtime, lateBy, enough,
     wins: wins.slice(0, 3), focus: focus.slice(0, 2),
     trend: { plates: trend('plates'), waterDays: trend('waterDays'), moveAvg: trend('moveAvg'), nights: trend('nights') },
   }

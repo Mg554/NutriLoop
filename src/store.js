@@ -125,6 +125,46 @@ export function analysePlate(items) {
   return { has, total, balanced, complete: balanced && has.dairy }
 }
 
+// meal slot by clock time (the child can change it)
+export function mealNow(d = new Date()) {
+  const m = d.getHours() * 60 + d.getMinutes()
+  return m < 10 * 60 + 30 ? 'breakfast' : m < 16 * 60 ? 'lunch' : 'dinner'
+}
+export const plateDate = (pl) => pl.date || todayStr(new Date(pl.ts))
+// how much of a food on this plate was really eaten (not checked yet = planned = 1)
+export const eatenFactor = (pl, id) => (pl.eaten && pl.eaten[id] != null ? pl.eaten[id] : 1)
+// what was really eaten, as plate items (count x factor)
+export function eatenItems(pl) {
+  return Object.fromEntries(Object.entries(pl.items).map(([sec, list]) => [sec, list.map((x) => ({ ...x, count: x.count * eatenFactor(pl, x.id) })).filter((x) => x.count > 0)]))
+}
+
+// Rebuild a day's food numbers from that day's plates (after save / edit / delete).
+function recomputeDay(p, date) {
+  const h = p.history[date]
+  if (!h) return
+  const plates = p.plates.filter((pl) => plateDate(pl) === date)
+  h.plates = 0
+  h.snacks = 0
+  h.missing = { veg: 0, grain: 0, protein: 0, dairy: 0 }
+  h.serv = { veg: 0, fruit: 0, grain: 0, protein: 0, dairy: 0 }
+  h.kcal = 0
+  for (const pl of plates) {
+    const items = eatenItems(pl)
+    if (pl.meal === 'snack') h.snacks += 1
+    else {
+      h.plates += 1
+      const a = analysePlate(items)
+      for (const sec of ['veg', 'grain', 'protein', 'dairy']) if (!a.has[sec]) h.missing[sec] += 1
+    }
+    for (const it of Object.values(items).flat()) {
+      const f = foodById[it.id]
+      if (!f) continue
+      h.serv[f.category] = (h.serv[f.category] || 0) + it.count
+      h.kcal += portionOf(it.id)[0] * it.count
+    }
+  }
+}
+
 // ---- helpers working on a draft progress object ---------------------------
 function ensureDay(p, child, date, settings) {
   const rmd = ramadanActive(settings?.ramadan)
@@ -197,6 +237,14 @@ function addMove(p, ev, child, date, seconds, extra) {
     growPlant(p, 15, ev)
     ev.push({ type: 'waterGoal', move: true })
   }
+}
+
+// exercise history for the parents' day log
+function logMove(p, date, seconds, log) {
+  if (!log) return
+  p.moveLog ||= []
+  p.moveLog.unshift({ ts: Date.now(), date, seconds: Math.round(seconds), ...log })
+  p.moveLog = p.moveLog.slice(0, 300)
 }
 
 // Visible streak: broken if the child skipped a whole day.
@@ -313,47 +361,79 @@ export function useStore() {
         }
       }),
 
-    savePlate: (childId, items) =>
+    // A plate is what the child PLANNED (built). After eating, the child (or a
+    // parent) marks what was really eaten: all / half / none per food. The day's
+    // servings are always recomputed from the day's plates x eaten amounts.
+    // meal: breakfast | lunch | dinner | snack
+    savePlate: (childId, items, meal = mealNow(), opts = {}) =>
       withChild(childId, (p, ev, { date }) => {
         const a = analysePlate(items)
-        if (a.total < 2) return
+        const snack = meal === 'snack'
+        if (a.total < (snack ? 1 : 2)) return
         const clean = Object.fromEntries(Object.entries(items).map(([k, v]) => [k, v.map((x) => ({ ...x }))]))
-        p.plates.unshift({ id: Date.now(), ts: Date.now(), items: clean, balanced: a.balanced, complete: a.complete })
-        p.plates = p.plates.slice(0, 100)
-        p.platesSaved += 1
-        if (a.balanced) p.balancedPlates += 1
-        if (a.complete) p.completePlates += 1
+        const now = Date.now()
+        const plate = { id: now, ts: now, date, meal, items: clean, balanced: !snack && a.balanced, complete: !snack && a.complete, eaten: opts.eaten || null }
+        p.plates.unshift(plate)
+        p.plates = p.plates.slice(0, 150)
         p.foodFirst ||= {} // food id -> date first put on a plate (weekly report)
         Object.values(items).flat().forEach((it) => {
           if (!p.foodsTried.includes(it.id)) { p.foodsTried.push(it.id); p.foodFirst[it.id] = date }
         })
-        const h = p.history[date]
-        h.plates += 1
-        for (const sec of ['veg', 'grain', 'protein', 'dairy']) if (!a.has[sec]) h.missing[sec] += 1
-        // servings per food group (each tap = 1 standard serving) + estimated kcal (parents only)
-        h.serv ||= { veg: 0, fruit: 0, grain: 0, protein: 0, dairy: 0 }
-        h.kcal ||= 0
-        for (const it of Object.values(items).flat()) {
-          const f = foodById[it.id]
-          if (!f) continue
-          h.serv[f.category] = (h.serv[f.category] || 0) + it.count
-          h.kcal += portionOf(it.id)[0] * it.count
-        }
-        // XP only for the first 3 plates a day (breakfast / lunch / dinner)
         let xp = 0
-        if (p.day.platesXp < 3) {
-          xp = 20 + (a.balanced ? 20 : 0) + (a.has.dairy ? 10 : 0)
-          p.day.platesXp += 1
-          addXp(p, xp, ev)
-          growPlant(p, a.balanced ? 25 : 10, ev)
+        if (snack) {
+          // a snack: small reward, twice a day at most
+          p.day.snackXp ||= 0
+          if (p.day.snackXp < 2) { xp = 5; p.day.snackXp += 1; addXp(p, xp, ev) }
+        } else {
+          p.platesSaved += 1
+          if (a.balanced) p.balancedPlates += 1
+          if (a.complete) p.completePlates += 1
+          // XP only for the first 3 plates a day (breakfast / lunch / dinner)
+          if (p.day.platesXp < 3) {
+            xp = 20 + (a.balanced ? 20 : 0) + (a.has.dairy ? 10 : 0)
+            p.day.platesXp += 1
+            addXp(p, xp, ev)
+            growPlant(p, a.balanced ? 25 : 10, ev)
+          }
         }
+        recomputeDay(p, date)
         markActive(p, date, ev)
-        ev.push({ type: 'plateSaved', xp })
+        ev.push({ type: 'plateSaved', xp, snack })
+      }),
+    // eaten: { foodId: 1 | 0.5 | 0 }
+    setEaten: (childId, plateId, eaten, by = 'child') =>
+      withChild(childId, (p, ev) => {
+        const pl = p.plates.find((x) => x.id === plateId)
+        if (!pl) return
+        const first = !pl.eaten
+        pl.eaten = { ...eaten }
+        pl.checkedAt = Date.now()
+        if (by === 'parent') pl.confirmed = true
+        if (first && by === 'child') {
+          // honesty is rewarded the same whatever was eaten
+          p.day.eatXp ||= 0
+          if (p.day.eatXp < 4) { p.day.eatXp += 1; addXp(p, 5, ev) }
+        }
+        recomputeDay(p, plateDate(pl))
+        ev.push({ type: 'eatenSaved', first })
+      }),
+    deletePlate: (childId, plateId) =>
+      withChild(childId, (p) => {
+        const pl = p.plates.find((x) => x.id === plateId)
+        if (!pl) return
+        p.plates = p.plates.filter((x) => x.id !== plateId)
+        recomputeDay(p, plateDate(pl))
+      }),
+    confirmPlate: (childId, plateId, on = true) =>
+      withChild(childId, (p) => {
+        const pl = p.plates.find((x) => x.id === plateId)
+        if (pl) pl.confirmed = on
       }),
 
     // ---- movement module -------------------------------------------------
-    completeExercise: (childId, { seconds, routineId, xp }) =>
+    completeExercise: (childId, { seconds, routineId, xp, log }) =>
       withChild(childId, (p, ev, { child, date }) => addMove(p, ev, child, date, seconds, () => {
+        logMove(p, date, seconds, log)
         if (routineId) {
           p.routines[routineId] = (p.routines[routineId] || 0) + 1
           p.routinesDone += 1
@@ -369,6 +449,7 @@ export function useStore() {
       withChild(childId, (p, ev, { child, date }) => {
         if (p.day.outdoor >= 2) return
         p.day.outdoor += 1
+        logMove(p, date, OUTDOOR_MIN * 60, { kind: 'outdoor', emoji: '🌳', title: { ar: 'لعب برا', en: 'Outdoor play' }, complete: true })
         addXp(p, 10, ev)
         ev.push({ type: 'water' })
         addMove(p, ev, child, date, OUTDOOR_MIN * 60)

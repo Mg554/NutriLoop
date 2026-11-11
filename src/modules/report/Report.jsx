@@ -123,6 +123,7 @@ export default function ReportView({ child, progress, onBack, toast }) {
 
   const grid = [
     { id: 'plates', emoji: '🍽️', label: A('أطباق', 'Plates'), cell: (row) => (row.plates ? <span className="font-black text-[11px]">{row.plates}</span> : null), on: (row) => row.plates > 0 },
+    { id: 'snack', emoji: '🍎', label: A('سناك', 'Snack'), cell: (row) => (row.snacks ? <span className="font-black text-[11px]">{row.snacks}</span> : null), on: (row) => row.snacks > 0 },
     { id: 'water', emoji: '💧', label: A('المي', 'Water'), on: (row) => row.water >= c.goalWater, half: (row) => row.water > 0 },
     { id: 'move', emoji: '⚡', label: A('الحركة', 'Move'), on: (row) => row.move >= c.goalMove, half: (row) => row.move > 0 },
     { id: 'night', emoji: '🌙', label: A('النجوم', 'Stars'), on: (row) => !!row.night },
@@ -239,6 +240,27 @@ export default function ReportView({ child, progress, onBack, toast }) {
           </tbody>
         </table>
       </div>
+
+      {/* exercises + eating check */}
+      {(r.sessions > 0 || r.mealsLogged > 0) && (
+        <div className="bg-white rounded-3xl border border-[var(--border)] p-4 space-y-2">
+          {r.sessions > 0 && (
+            <>
+              <h2 className="font-black">💪 {A(`التمارين (${r.sessions} جلسات)`, `Workouts (${r.sessions} sessions)`)}</h2>
+              {r.workouts.slice(0, 6).map((w, i) => (
+                <div key={i} className="flex items-center gap-2 text-sm">
+                  <span className="text-xl">{w.emoji}</span>
+                  <span className="flex-1 font-bold">{w.title?.[lang]}</span>
+                  <span className="text-xs font-black text-[var(--text-soft)]" dir="ltr">×{w.n} · {Math.round(w.seconds / 60)} {A('د', 'min')}</span>
+                </div>
+              ))}
+            </>
+          )}
+          {r.mealsLogged > 0 && (
+            <p className="text-xs text-[var(--text-soft)]">🍽️ {A(`سجّل شو أكل فعلًا بـ ${r.eatChecked} من ${r.mealsLogged} وجبات · ${c.snacks} سناك`, `Recorded what was really eaten for ${r.eatChecked} of ${r.mealsLogged} meals · ${c.snacks} snacks`)}</p>
+          )}
+        </div>
+      )}
 
       {/* extras */}
       {(r.newFoods.length > 0 || c.thanks.length > 0) && (

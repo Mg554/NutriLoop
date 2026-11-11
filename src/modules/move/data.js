@@ -59,6 +59,7 @@ export const OUTDOOR_MIN = 15
 
 export const MOVE_STR = {
   ar: {
+    workoutLeft: 'باقي من التمرين', moveLeft: 'باقي {n} د',
     move: 'الحركة',
     moveBattery: 'شاحن الحركة', minutes: 'دقيقة',
     hadith: '«المؤمنُ القويُّ خيرٌ وأحبُّ إلى اللهِ من المؤمنِ الضعيف» — رواه مسلم',
@@ -86,6 +87,7 @@ export const MOVE_STR = {
     camSetting: 'المدرب الذكي بالكاميرا',
   },
   en: {
+    workoutLeft: 'Workout time left', moveLeft: '{n} min to go',
     move: 'Move',
     moveBattery: 'Move Battery', minutes: 'min',
     hadith: '“The strong believer is better and more beloved to Allah than the weak believer” — Muslim',

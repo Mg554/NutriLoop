@@ -5,6 +5,7 @@ import { moveGoalForAge } from './modules/move/data'
 import Kid, { PALETTES, kidProps } from './modules/move/Kid'
 import GrowthView from './modules/growth/Growth'
 import ReportView from './modules/report/Report'
+import DayLog from './modules/report/DayLog'
 import RemindersCard from './RemindersCard'
 import RamadanSettings from './modules/ramadan/RamadanSettings'
 import { GRATITUDE, bedtimeFor, sleepRangeForAge } from './modules/night/data'
@@ -236,7 +237,7 @@ function lastDays(n) {
   return out
 }
 
-function WeekSummary({ child, progress, onGrowth, onReport }) {
+function WeekSummary({ child, progress, onGrowth, onReport, onLog }) {
   const { t, L, lang } = useT()
   const days = lastDays(7)
   const rows = days.map((d) => progress?.history?.[d] || { plates: 0, quests: 0, water: 0, missing: {} })
@@ -251,6 +252,7 @@ function WeekSummary({ child, progress, onGrowth, onReport }) {
         <span className="text-2xl">{child.avatar}</span>
         <span className="font-black">{child.name}</span>
         <span className="text-xs text-[var(--text-soft)] ms-auto">{t('week')}</span>
+        <button onClick={onLog} className="px-2.5 py-1 rounded-full bg-sky-500 text-white text-[11px] font-black">📜 {lang === 'ar' ? 'السجل' : 'Log'}</button>
         <button onClick={onReport} className="px-2.5 py-1 rounded-full bg-amber-500 text-white text-[11px] font-black">📊 {lang === 'ar' ? 'التقرير' : 'Report'}</button>
         <button onClick={onGrowth} className="px-2.5 py-1 rounded-full bg-[var(--primary)] text-white text-[11px] font-black">📏 {t('growth')}</button>
       </div>
@@ -297,6 +299,7 @@ export function ParentDashboard({ state, actions, onClose, toast, initialReport 
   const [changingPin, setChangingPin] = useState(false)
   const [growthFor, setGrowthFor] = useState(null)
   const [reportFor, setReportFor] = useState(initialReport || null)
+  const [logFor, setLogFor] = useState(null)
   const [showCode, setShowCode] = useState(null)
   const made = useRef(false)
   // Every parent area gets a recovery code once (also older installs).
@@ -310,6 +313,7 @@ export function ParentDashboard({ state, actions, onClose, toast, initialReport 
   useBack(onClose, 0)
   useBack(() => setGrowthFor(null), 2, !!growthFor)
   useBack(() => setReportFor(null), 2, !!reportFor)
+  useBack(() => setLogFor(null), 2, !!logFor)
   useBack(() => setEditing(null), 2, !!editing)
   useBack(() => setChangingPin(false), 2, changingPin)
   const codeCard = showCode && <RecoveryCodeCard code={showCode} onDone={() => setShowCode(null)} />
@@ -347,6 +351,13 @@ export function ParentDashboard({ state, actions, onClose, toast, initialReport 
     r.readAsText(file)
   }
 
+  const lChild = children.find((c) => c.id === logFor)
+  if (lChild)
+    return (
+      <div className="h-full overflow-y-auto no-scrollbar max-w-xl mx-auto p-4 pb-10">
+        <DayLog key={lChild.id} child={lChild} progress={progress[lChild.id] || {}} actions={actions} toast={toast} onBack={() => setLogFor(null)} />
+      </div>
+    )
   const rChild = children.find((c) => c.id === reportFor)
   if (rChild)
     return (
@@ -434,7 +445,7 @@ export function ParentDashboard({ state, actions, onClose, toast, initialReport 
       )}
 
       {/* weekly */}
-      {children.map((c) => <WeekSummary key={c.id} child={c} progress={progress[c.id]} onGrowth={() => setGrowthFor(c.id)} onReport={() => setReportFor(c.id)} />)}
+      {children.map((c) => <WeekSummary key={c.id} child={c} progress={progress[c.id]} onGrowth={() => setGrowthFor(c.id)} onReport={() => setReportFor(c.id)} onLog={() => setLogFor(c.id)} />)}
 
       {/* settings */}
       <Card>

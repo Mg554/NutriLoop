@@ -6,8 +6,9 @@ import PortionsCard from './modules/growth/PortionsCard'
 import { NightCard, NightJourney } from './modules/night/Night'
 import RamadanCard, { RamadanSoon } from './modules/ramadan/Ramadan'
 import Arcade from './modules/arcade/Arcade'
+import { EatCheck, EatPrompt, MealPicker, QuickSnack, eatenShare, mealOf } from './modules/meals/Meals'
 import { portionOf } from './modules/growth/portions'
-import { analysePlate, getFood, levelInfo, liveStreak, sectionOf } from './store'
+import { analysePlate, getFood, levelInfo, liveStreak, mealNow, plateDate, sectionOf, todayStr } from './store'
 import { say, sfx } from './sfx'
 import { Card, Modal, Plate, emptyPlate, foodMatches, useDrag, useT } from './ui'
 import { findFoods } from './voiceMatch'
@@ -68,12 +69,12 @@ export default function ChildApp({ child, progress, settings, actions, onSwitch,
       </header>
 
       <main className="flex-1 overflow-y-auto no-scrollbar p-4 pb-28">
-        {tab === 'today' && <Today {...{ child, progress, settings, actions }} onNight={() => setNightOpen(true)} />}
+        {tab === 'today' && <Today {...{ child, progress, settings, actions, toast }} onNight={() => setNightOpen(true)} />}
         {nightOpen && <NightJourney child={child} progress={progress} schoolDays={schoolDays} actions={actions} onClose={() => setNightOpen(false)} />}
         {tab === 'plate' && <PlateBuilder {...{ child, progress, actions, toast }} onDiary={() => setTab('diary')} />}
         {tab === 'move' && <MoveTab {...{ child, progress, actions, settings }} />}
         {tab === 'game' && <Arcade {...{ child, progress, actions, siblings }} />}
-        {tab === 'diary' && <Diary progress={progress} onBack={() => setTab('plate')} />}
+        {tab === 'diary' && <Diary {...{ child, progress, actions, toast }} onBack={() => setTab('plate')} />}
         {tab === 'rewards' && <Rewards progress={progress} />}
       </main>
 
@@ -94,7 +95,7 @@ export default function ChildApp({ child, progress, settings, actions, onSwitch,
 }
 
 // ---------------------------------------------------------------------------
-function Today({ child, progress, settings, actions, onNight }) {
+function Today({ child, progress, settings, actions, onNight, toast }) {
   const { t, pick, lang } = useT()
   const day = progress.day
   if (!day) return null
@@ -110,6 +111,7 @@ function Today({ child, progress, settings, actions, onNight }) {
     <div className="space-y-4 anim-pop">
       <RamadanSoon settings={settings} />
       <RamadanCard {...{ child, progress, settings, actions }} />
+      <EatPrompt {...{ child, progress, actions, toast }} />
       {evening && night}
       <div className="flex items-center justify-between">
         <div>
@@ -164,6 +166,7 @@ function Today({ child, progress, settings, actions, onNight }) {
         </div>
       </div>
 
+      <QuickSnack {...{ child, actions, toast }} />
       <PortionsCard child={child} progress={progress} />
       <Manners {...{ child, progress, actions }} />
       {!evening && night}
@@ -238,6 +241,7 @@ function MealTimer() {
 function PlateBuilder({ child, progress, actions, toast, onDiary }) {
   const { t, lang, L } = useT()
   const [items, setItems] = useState(emptyPlate)
+  const [meal, setMeal] = useState(() => mealNow())
   const [q, setQ] = useState('')
   const [cat, setCat] = useState('all')
   const [listening, setListening] = useState(false)
@@ -281,10 +285,13 @@ function PlateBuilder({ child, progress, actions, toast, onDiary }) {
 
   const foods = FOODS.filter((f) => (cat === 'all' || (cat === 'pal' ? f.pal : f.category === cat)) && foodMatches(f, q))
   const xpLeft = (progress.day?.platesXp ?? 0) < 3
+  const snack = meal === 'snack'
+  const minItems = snack ? 1 : 2
 
   const save = () => {
-    actions.savePlate(child.id, items)
+    actions.savePlate(child.id, items, meal)
     setItems(emptyPlate())
+    setMeal(mealNow())
   }
 
   const recRef = useRef(null)
@@ -355,14 +362,15 @@ function PlateBuilder({ child, progress, actions, toast, onDiary }) {
 
       <Plate items={items} over={over} onRemove={remove} />
 
+      <MealPicker value={meal} onChange={setMeal} />
       <button
         onClick={save}
-        disabled={a.total < 2}
-        className={`w-full py-3.5 rounded-2xl font-black transition-all active:scale-95 shadow-md ${a.total >= 2 ? 'bg-[#1A1A1A] text-white' : 'bg-gray-200 text-gray-400'}`}
+        disabled={a.total < minItems}
+        className={`w-full py-3.5 rounded-2xl font-black transition-all active:scale-95 shadow-md ${a.total >= minItems ? 'bg-[#1A1A1A] text-white' : 'bg-gray-200 text-gray-400'}`}
       >
-        {a.total < 2 ? t('needMore') : `${t('savePlate')}${xpLeft ? ' ✨' : ''}`}
+        {a.total < minItems ? (snack ? t('mlNeedOne') : t('needMore')) : snack ? t('mlSaveSnack') : `${t('savePlate')}${xpLeft ? ' ✨' : ''}`}
       </button>
-      {!xpLeft && <p className="text-xs text-center text-[var(--text-soft)]">{t('alreadySaved')}</p>}
+      {!xpLeft && !snack && <p className="text-xs text-center text-[var(--text-soft)]">{t('alreadySaved')}</p>}
 
       {/* palette */}
       <div className="space-y-2">
@@ -410,9 +418,11 @@ function PlateBuilder({ child, progress, actions, toast, onDiary }) {
 }
 
 // ---------------------------------------------------------------------------
-function Diary({ progress, onBack }) {
+function Diary({ child, progress, actions, toast, onBack }) {
   const { t, lang } = useT()
   const [sel, setSel] = useState(null)
+  const [edit, setEdit] = useState(null)
+  const today = todayStr()
   const fmt = (ts) => new Date(ts).toLocaleString(lang === 'ar' ? 'ar' : 'en', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
   return (
     <div className="space-y-3 anim-pop">
@@ -423,25 +433,36 @@ function Diary({ progress, onBack }) {
       {progress.plates.length === 0 ? (
         <Card className="text-center py-10 text-gray-500"><span className="text-5xl block mb-2">🍽️</span><p className="font-bold">{t('diaryEmpty')}</p></Card>
       ) : (
-        progress.plates.map((p) => (
-          <button key={p.id} onClick={() => { sfx.pop(); setSel(p) }} className="w-full text-start bg-white rounded-2xl p-3 border border-[var(--border)] flex gap-3 items-center active:scale-[.98] shadow-sm">
-            <div className="flex flex-wrap gap-0.5 w-20 shrink-0 text-lg leading-none">
-              {Object.values(p.items).flat().slice(0, 8).map((it) => <span key={it.id}>{getFood(it.id)?.emoji}</span>)}
-            </div>
-            <div className="flex-1">
-              <h3 className="font-bold text-sm">{p.complete ? '🥇 ' : p.balanced ? '⚖️ ' : ''}{p.balanced ? t('balancedPlate') : t('plateLbl')}</h3>
-              <p className="text-xs text-[var(--text-soft)]">{fmt(p.ts)}</p>
-            </div>
-          </button>
-        ))
+        progress.plates.map((p) => {
+          const m = mealOf(p.meal)
+          const share = p.eaten ? Math.round(eatenShare(p) * 100) : null
+          return (
+            <button key={p.id} onClick={() => { sfx.pop(); setSel(p) }} className="w-full text-start bg-white rounded-2xl p-3 border border-[var(--border)] flex gap-3 items-center active:scale-[.98] shadow-sm">
+              <div className="flex flex-wrap gap-0.5 w-20 shrink-0 text-lg leading-none">
+                {Object.values(p.items).flat().slice(0, 8).map((it) => <span key={it.id} className={p.eaten?.[it.id] === 0 ? 'opacity-30' : ''}>{getFood(it.id)?.emoji}</span>)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-sm">{m.emoji} {p.meal ? t(m.key) : p.balanced ? t('balancedPlate') : t('plateLbl')}{p.complete ? ' 🥇' : p.balanced ? ' ⚖️' : ''}</h3>
+                <p className="text-xs text-[var(--text-soft)]">{fmt(p.ts)}</p>
+              </div>
+              {p.meal !== 'snack' && (share == null
+                ? <span className="text-[10px] font-black px-2 py-1 rounded-full bg-amber-100 text-amber-700 shrink-0">❔</span>
+                : <span className="text-[10px] font-black px-2 py-1 rounded-full bg-green-100 text-green-700 shrink-0" dir="ltr">{share}%</span>)}
+              {p.confirmed && <span title={t('mlConfirmed')}>✔️</span>}
+            </button>
+          )
+        })
       )}
-      {sel && (
+      {sel && !edit && (
         <Modal onClose={() => setSel(null)}>
-          <p className="text-sm font-bold text-gray-400">{fmt(sel.ts)}</p>
+          <p className="text-sm font-bold text-gray-400">{mealOf(sel.meal).emoji} {fmt(sel.ts)}</p>
           <Plate items={sel.items} small />
+          {sel.meal !== 'snack' && <p className="text-xs font-bold text-[var(--text-soft)]">{sel.eaten ? `${Math.round(eatenShare(sel) * 100)}% ${t('mlEaten')}` : t('mlNotChecked')}</p>}
+          {plateDate(sel) === today && !sel.confirmed && <button onClick={() => setEdit(sel)} className="w-full py-2.5 bg-amber-100 text-amber-800 font-black rounded-2xl">✏️ {sel.eaten ? t('mlEdit') : t('mlWhatAte')}</button>}
           <button onClick={() => setSel(null)} className="w-full py-3 bg-gray-900 text-white font-black rounded-2xl">{t('ok')}</button>
         </Modal>
       )}
+      {edit && <EatCheck plate={edit} onClose={() => setEdit(null)} onSave={(e) => { actions.setEaten(child.id, edit.id, e); setEdit(null); setSel(null); sfx.sparkle(); toast?.(t('mlThanks')) }} />}
     </div>
   )
 }

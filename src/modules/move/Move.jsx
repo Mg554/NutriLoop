@@ -38,7 +38,7 @@ export default function MoveTab({ child, progress, actions, settings }) {
             <span className="text-3xl">⚡</span>
             <div>
               <h3 className="font-black text-sm">{t('moveBattery')}</h3>
-              <p className="text-[11px] opacity-90">{mins} / {goal} {t('minutes')}</p>
+              <p className="text-[11px] opacity-90">{mins} / {goal} {t('minutes')}{mins < goal ? ` · ${t('moveLeft', { n: goal - mins })}` : ' ✅'}</p>
             </div>
           </div>
           <span className="text-sm font-black px-2.5 py-1 rounded-full bg-white/20">{pct}%</span>
@@ -134,7 +134,7 @@ export default function MoveTab({ child, progress, actions, settings }) {
           age={child.age}
           child={child}
           onClose={() => setCam(null)}
-          onFinish={(seconds, complete) => actions.completeExercise(child.id, { seconds, routineId: complete ? 'cam' : null, xp: complete ? 30 : 0 })}
+          onFinish={(seconds, complete) => actions.completeExercise(child.id, { seconds, routineId: complete ? 'cam' : null, xp: complete ? 30 : 0, log: { kind: 'cam', id: cam.ex, emoji: EXERCISES[cam.ex].emoji, title: EXERCISES[cam.ex].name, complete } })}
         />
       )}
       {run && (
@@ -143,7 +143,7 @@ export default function MoveTab({ child, progress, actions, settings }) {
           age={child.age}
           child={child}
           onClose={() => setRun(null)}
-          onFinish={(seconds, complete) => actions.completeExercise(child.id, { seconds, routineId: complete ? run.id : null, xp: complete ? run.xp : 0 })}
+          onFinish={(seconds, complete) => actions.completeExercise(child.id, { seconds, routineId: complete ? run.id : null, xp: complete ? run.xp : 0, log: { kind: run.id === 'single' ? 'single' : 'routine', id: run.id === 'single' ? run.steps[0] : run.id, emoji: run.emoji, title: run.title, complete } })}
         />
       )}
     </div>
@@ -271,6 +271,15 @@ function Runner({ routine, age, child, onClose, onFinish }) {
   })
 
 
+  // whole-workout countdown: planned time of the steps not done yet
+  const plan = steps.map((id) => secFor(EXERCISES[id]))
+  const rest = routine.rest || 0
+  const allSecs = plan.reduce((a, b) => a + b, 0) + rest * (steps.length - 1)
+  const doneSecs = phase === 'done' ? allSecs : phase === 'ready' || phase === 'count' ? 0
+    : plan.slice(0, idx).reduce((a, b) => a + b, 0) + rest * idx + (phase === 'work' ? plan[idx] - left : plan[idx] + (rest - left))
+  const remain = Math.max(0, allSecs - doneSecs)
+  const mmss = (x) => `${Math.floor(x / 60)}:${String(x % 60).padStart(2, '0')}`
+
   const shown = phase === 'rest' ? nextEx : ex
   const shownId = phase === 'rest' ? steps[idx + 1] : steps[idx]
   const progressPct = total ? left / total : 0
@@ -283,6 +292,16 @@ function Runner({ routine, age, child, onClose, onFinish }) {
         <button onClick={quit} className="px-3 py-1.5 rounded-xl bg-white border border-[var(--border)] text-sm font-bold">✕ {t('quit')}</button>
         <span className="font-black text-sm">{routine.emoji} {pick(routine.title)}</span>
         <span className="text-xs font-bold text-[var(--text-soft)]">{Math.min(idx + 1, steps.length)}/{steps.length}</span>
+      </div>
+      {/* whole workout: how much is left */}
+      <div className="px-6 pb-2" aria-label="workout progress">
+        <div className="flex justify-between text-[11px] font-black text-[var(--text-soft)] mb-1">
+          <span>⏱️ {t('workoutLeft')}</span>
+          <span dir="ltr" className="tabular-nums">{mmss(remain)}</span>
+        </div>
+        <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden" dir="ltr">
+          <div className="h-full rounded-full bg-gradient-to-r from-orange-400 to-pink-500" style={{ width: `${(doneSecs / allSecs) * 100}%`, transition: 'width .25s linear' }} />
+        </div>
       </div>
       {/* step dots */}
       <div className="flex gap-1.5 px-6">
