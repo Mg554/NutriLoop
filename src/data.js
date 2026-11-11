@@ -8,6 +8,7 @@ import { NIGHT_STR } from './modules/night/data'
 import { RAMADAN_QUESTS, RAMADAN_STR } from './modules/ramadan/data'
 import { ARCADE_STR } from './modules/arcade/strings'
 import { MEAL_STR } from './modules/meals/strings'
+import { ISLAND_STR } from './modules/island/strings'
 
 // Plate sections (MyPlate): veg+fruit = half, grain = ¼, protein = ¼, dairy = cup on the side.
 export const SECTIONS = ['veg', 'grain', 'protein', 'dairy']
@@ -317,6 +318,6 @@ export const STR = {
   },
 }
 
-for (const l of ['ar', 'en']) for (const k of [...Object.keys(MOVE_STR[l]), ...Object.keys(NIGHT_STR[l]), ...Object.keys(RAMADAN_STR[l]), ...Object.keys(ARCADE_STR[l]), ...Object.keys(MEAL_STR[l])]) if (k in STR[l]) console.warn('string key clash', k)
-Object.assign(STR.ar, MOVE_STR.ar, NIGHT_STR.ar, RAMADAN_STR.ar, ARCADE_STR.ar, MEAL_STR.ar)
-Object.assign(STR.en, MOVE_STR.en, NIGHT_STR.en, RAMADAN_STR.en, ARCADE_STR.en, MEAL_STR.en)
+for (const l of ['ar', 'en']) for (const k of [...Object.keys(MOVE_STR[l]), ...Object.keys(NIGHT_STR[l]), ...Object.keys(RAMADAN_STR[l]), ...Object.keys(ARCADE_STR[l]), ...Object.keys(MEAL_STR[l]), ...Object.keys(ISLAND_STR[l])]) if (k in STR[l]) console.warn('string key clash', k)
+Object.assign(STR.ar, MOVE_STR.ar, NIGHT_STR.ar, RAMADAN_STR.ar, ARCADE_STR.ar, MEAL_STR.ar, ISLAND_STR.ar)
+Object.assign(STR.en, MOVE_STR.en, NIGHT_STR.en, RAMADAN_STR.en, ARCADE_STR.en, MEAL_STR.en, ISLAND_STR.en)

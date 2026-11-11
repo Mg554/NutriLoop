@@ -6,6 +6,7 @@ import Kid, { PALETTES, kidProps } from './modules/move/Kid'
 import GrowthView from './modules/growth/Growth'
 import ReportView from './modules/report/Report'
 import DayLog from './modules/report/DayLog'
+import { IslandSettings } from './modules/island/Island'
 import RemindersCard from './RemindersCard'
 import RamadanSettings from './modules/ramadan/RamadanSettings'
 import { GRATITUDE, bedtimeFor, sleepRangeForAge } from './modules/night/data'
@@ -463,6 +464,7 @@ export function ParentDashboard({ state, actions, onClose, toast, initialReport 
           </label>
         </div>
       </Card>
+      <IslandSettings state={state} actions={actions} />
       <RemindersCard state={state} actions={actions} toast={toast} />
       <RamadanSettings state={state} actions={actions} />
       <UpdatesCard toast={toast} />

@@ -10,6 +10,7 @@ import { OUTDOOR_MIN, moveGoalForAge } from './modules/move/data'
 import { portionOf } from './modules/growth/portions'
 import { isNative, nativeLoad, nativeSave } from './native'
 import { defaultReminders } from './reminderDefaults'
+import { defaultIsland } from './modules/island/islandLogic'
 
 const EX_XP_CAP = 6
 
@@ -557,6 +558,23 @@ export function useStore() {
         const upgraded = tier && TROPHY_ORDER.indexOf(tier) > TROPHY_ORDER.indexOf(old)
         if (upgraded) p.arcade.trophies[game] = tier
         ev.push({ type: 'gameOver', xp, game, newBest: newBest && prevBest > 0, trophy: upgraded ? tier : null })
+      }),
+    // 🏝️ streak island (parents)
+    setIsland: (childId, patch) =>
+      withChild(childId, (p, ev, { date }) => {
+        const cur = { ...defaultIsland(), ...(p.island || {}) }
+        const next = { ...cur, ...patch }
+        // switching on, or changing goal / rules, starts the island today
+        if ((patch.on && !cur.on) || patch.restart || !next.start) next.start = date
+        delete next.restart
+        p.island = next
+      }),
+    claimIsland: (childId) =>
+      withChild(childId, (p, ev, { date }) => {
+        if (!p.island) return
+        p.islands ||= []
+        p.islands.unshift({ goal: p.island.goal, prize: p.island.prize, emoji: p.island.emoji, done: date })
+        p.island = { ...p.island, start: date }
       }),
     learnFact: (childId, factId) =>
       withChild(childId, (p) => {

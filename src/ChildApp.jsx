@@ -6,6 +6,7 @@ import PortionsCard from './modules/growth/PortionsCard'
 import { NightCard, NightJourney } from './modules/night/Night'
 import RamadanCard, { RamadanSoon } from './modules/ramadan/Ramadan'
 import Arcade from './modules/arcade/Arcade'
+import IslandCard from './modules/island/Island'
 import { EatCheck, EatPrompt, MealPicker, QuickSnack, eatenShare, mealOf } from './modules/meals/Meals'
 import { portionOf } from './modules/growth/portions'
 import { analysePlate, getFood, levelInfo, liveStreak, mealNow, plateDate, sectionOf, todayStr } from './store'
@@ -113,6 +114,7 @@ function Today({ child, progress, settings, actions, onNight, toast }) {
       <RamadanCard {...{ child, progress, settings, actions }} />
       <EatPrompt {...{ child, progress, actions, toast }} />
       {evening && night}
+      <IslandCard child={child} progress={progress} />
       <div className="flex items-center justify-between">
         <div>
           <h2 className="font-black text-xl">{t('todaysQuests')}</h2>
