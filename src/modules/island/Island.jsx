@@ -93,6 +93,7 @@ export default function IslandCard({ child, progress }) {
         </div>
         {!st.reached && (
           <>
+            {st.waiting && !st.todayDone && <p className="text-xs font-bold text-sky-700 bg-sky-50 rounded-xl px-2 py-1.5">🌊 {t('isWaiting')}</p>}
             <p className="text-xs font-black">{st.todayDone ? `🎉 ${t('isTodayDone')}` : t('isToday')}</p>
             <div className="flex flex-wrap gap-1.5">
               {RULES.filter((r) => st.cfg.rules.includes(r.id)).map((r) => (
@@ -133,10 +134,10 @@ export function IslandSettings({ state, actions }) {
       {kids.length > 1 && (
         <div className="flex gap-1.5">{kids.map((c) => <button key={c.id} onClick={() => setId(c.id)} className={`px-3 py-1.5 rounded-full text-xs font-black border ${c.id === child.id ? 'bg-[var(--primary)] text-white border-[var(--primary)]' : 'bg-white border-[var(--border)]'}`}>{c.avatar} {c.name}</button>)}</div>
       )}
-      <p className="text-[11px] text-[var(--text-soft)]">{A('كل يوم بتكتمل فيه الشروط بيبني خطوة على الجزيرة لحد الكنز. تغيير الهدف أو الشروط بيبلّش الجزيرة من اليوم.', 'Each day that meets the conditions builds one step toward the treasure. Changing the goal or the conditions restarts the island today.')}</p>
+      <p className="text-[11px] text-[var(--text-soft)]">{A('كل يوم بتكتمل فيه الشروط بيبني خطوة لحد الكنز. اليوم اللي بيفوت ما بيهدم إشي: الجزيرة بتستنى. تغيير الهدف أو الشروط بيبلّش جزيرة جديدة.', 'Each day that meets the conditions builds one step toward the treasure. A missed day destroys nothing: the island waits. Changing the goal or the conditions starts a new island.')}</p>
       {cfg.on && st.on && (
         <div className="rounded-2xl bg-sky-50 border border-sky-200 p-2 text-sm font-bold flex items-center justify-between">
-          <span>{child.avatar} {st.steps}/{st.goal} {A('يوم', 'days')}{st.restarts ? A(` · بلّشت من جديد ${st.restarts} مرة`, ` · restarted ${st.restarts}×`) : ''}</span>
+          <span>{child.avatar} {st.steps}/{st.goal} {A('يوم', 'days')}{st.missed ? A(` · ${st.missed} يوم فات (الجزيرة استنّت)`, ` · ${st.missed} missed (island waited)`) : ''}</span>
           {st.reached && <button onClick={() => { sfx.fanfare(); actions.claimIsland(child.id) }} className="px-3 py-1.5 rounded-xl bg-green-600 text-white text-xs font-black">🎁 {A('سلّمنا الجائزة', 'Prize given')}</button>}
         </div>
       )}
@@ -160,7 +161,7 @@ export function IslandSettings({ state, actions }) {
         </div>
       </div>
       <button onClick={() => set({ grace: !cfg.grace })} className={`w-full py-2 rounded-xl text-xs font-bold border text-start px-3 ${cfg.grace ? 'bg-sky-50 border-sky-400' : 'bg-white border-[var(--border)]'}`}>
-        {cfg.grace ? '☑️' : '⬜'} 🛟 {A('يوم سماح: يوم واحد كل ٧ أيام ممكن يفوت بدون ما تخرب الجزيرة', 'Life ring: one missed day per 7 days does not break the island')}
+        {cfg.grace ? '☑️' : '⬜'} 🛟 {A('طوق نجاة: يوم واحد بيفوت كل ٧ أيام بينحسب خطوة هدية', 'Life ring: one missed day per 7 days still counts as a gift step')}
       </button>
       {(p.islands || []).length > 0 && <p className="text-[11px] text-[var(--text-soft)]">🏆 {A('جزر مكتملة:', 'Islands completed:')} {p.islands.map((x) => x.emoji).join(' ')}</p>}
     </Card>

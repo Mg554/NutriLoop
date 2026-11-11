@@ -41,30 +41,30 @@ export function dayChecks(child, p, date, rules) {
 }
 export const dayComplete = (checks) => Object.values(checks).length > 0 && Object.values(checks).every(Boolean)
 
-// walk the days from the island start: complete / grace / missed
+// Walk the days from the island start. A complete day builds a step.
+// A missed day never destroys anything: the island just waits (paused).
+// With the life ring on, one missed day per 7 days is filled in as a 🛟 step.
 export function islandState(child, p, today) {
   const cfg = { ...defaultIsland(), ...(p.island || {}) }
   if (!cfg.on || !cfg.start) return { cfg, on: false }
-  let steps = 0
   let lastGrace = null
-  let restarts = 0
-  let start = cfg.start
+  let missed = 0
   const days = [] // { date, state: 'done'|'grace' }
   for (let d = cfg.start; d < today; d = addDays(d, 1)) {
-    if (steps >= cfg.goal) break
-    const ok = dayComplete(dayChecks(child, p, d, cfg.rules))
-    if (ok) { steps += 1; days.push({ date: d, state: 'done' }) } else if (cfg.grace && (!lastGrace || addDays(lastGrace, 7) <= d) && steps > 0) {
+    if (days.length >= cfg.goal) break
+    if (dayComplete(dayChecks(child, p, d, cfg.rules))) days.push({ date: d, state: 'done' })
+    else if (cfg.grace && days.length > 0 && (!lastGrace || addDays(lastGrace, 7) <= d)) {
       lastGrace = d
       days.push({ date: d, state: 'grace' })
-    } else {
-      // missed: a new island starts the next day
-      if (steps > 0) restarts += 1
-      steps = 0; days.length = 0; lastGrace = null; start = addDays(d, 1)
-    }
+    } else missed += 1
   }
   const todayChecks = dayChecks(child, p, today, cfg.rules)
   const todayDone = dayComplete(todayChecks)
-  if (todayDone && steps < cfg.goal) { steps += 1; days.push({ date: today, state: 'done' }) }
+  if (todayDone && days.length < cfg.goal) days.push({ date: today, state: 'done' })
+  const steps = Math.min(days.length, cfg.goal)
   const graceLeft = cfg.grace && (!lastGrace || addDays(lastGrace, 7) <= today)
-  return { cfg, on: true, steps: Math.min(steps, cfg.goal), goal: cfg.goal, reached: steps >= cfg.goal, todayChecks, todayDone, days, graceLeft, restarts, start }
+  // yesterday was missed (and not covered): the island is waiting
+  const y = addDays(today, -1)
+  const waiting = y >= cfg.start && !days.some((x) => x.date === y) && steps < cfg.goal
+  return { cfg, on: true, steps, goal: cfg.goal, reached: steps >= cfg.goal, todayChecks, todayDone, days, graceLeft, missed, waiting, start: cfg.start }
 }
